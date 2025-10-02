@@ -1,0 +1,8 @@
+# Ignorar node_modules en cualquier carpeta
+node_modules/
+
+# Ignorar archivos comunes
+.env
+*.log
+.DS_Store
+Thumbs.db
