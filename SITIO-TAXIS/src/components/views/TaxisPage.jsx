@@ -1,5 +1,6 @@
 // src/pages/TaxisPage.jsx
 import { useEffect, useState } from "react";
+import Navbar from "../Nabvars/Nabvar";
 
 function TaxisPage() {
   const [taxis, setTaxis] = useState([]);
@@ -79,6 +80,7 @@ function TaxisPage() {
 
   return (
     <div>
+      <Navbar/>
       <h1>Administrar Taxis</h1>
       <form onSubmit={handleSubmit} style={{ marginBottom: "20px" }}>
         <input

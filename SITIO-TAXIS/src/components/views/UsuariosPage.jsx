@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Navbar from "../Nabvars/Nabvar";
 
 function UsuariosPage() {
   const [usuarios, setUsuarios] = useState([]);
@@ -63,6 +64,7 @@ function UsuariosPage() {
 
   return (
     <div>
+      <Navbar/>
       <h1>Usuarios</h1>
 
       <form onSubmit={handleSubmit}>
