@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-function UsuariosCRUD() {
+function UsuariosPage() {
   const [usuarios, setUsuarios] = useState([]);
   const [form, setForm] = useState({
     rol: "",
@@ -88,4 +88,4 @@ function UsuariosCRUD() {
   );
 }
 
-export default UsuariosCRUD;
+export default UsuariosPage;
