@@ -15,6 +15,45 @@ const db = mysql.createConnection({
 });
 
 // ===============================================
+// 🚀 ENDPOINT PARA INICIO DE SESIÓN (LOGIN)
+// ===============================================
+app.post("/login", (req, res) => {
+  // Asegúrate de que el body de la petición tiene 'no_lista' y 'contraseña'
+  const { no_lista, contraseña } = req.body; 
+
+  // Consulta para verificar si existe un usuario con el no_lista y la contraseña
+  const sql = `
+    SELECT no_lista, rol, nombre, apellido_P FROM Usuario 
+    WHERE no_lista = ? AND contraseña = ?
+  `;
+  
+  // ¡NOTA IMPORTANTE! Las contraseñas se guardan en texto plano en tu BD. 
+  // En una aplicación real, DEBES usar hashing (como bcrypt) para almacenarlas de forma segura.
+  db.query(sql, [no_lista, contraseña], (err, results) => {
+    if (err) {
+      console.error("Error de base de datos durante el login:", err);
+      return res.status(500).json({ message: "Error interno del servidor." });
+    }
+
+    if (results.length === 1) {
+      // Coincidencia encontrada: inicio de sesión exitoso
+      const usuario = results[0];
+      // Eliminar la contraseña del objeto de usuario antes de enviarlo
+      delete usuario.contraseña; 
+      
+      // En un caso real, aquí se generaría un token JWT
+      return res.json({ 
+        message: "Inicio de sesión exitoso", 
+        usuario: usuario 
+      });
+    } else {
+      // No hay coincidencia
+      return res.status(401).json({ message: "Username o Contraseña incorrectos." });
+    }
+  });
+});
+
+// ===============================================
 // 🚀 ENDPOINTS PARA LA TABLA USUARIO
 // ===============================================
 // ✅ CREATE (insertar usuario)

@@ -21,7 +21,7 @@ input, button, select, textarea {
   width: 100%;
   height: 650px;
   overflow: hidden;
-  background-color: #FFDD00;
+  background-color: #F4D35E;
   @media (max-width: 1024px) {
     height: 500px;
     max-height: 900px;
@@ -238,4 +238,97 @@ font-size: 1.1em;
 
 
 
+/* ///////////////////////////////////////////////////////////// Footer ////////////////////////////////////////////////////////// */
+.imgWhats {
+  position: fixed;
+  bottom: 23px;
+  right: 15px;
+  z-index: 1;
+  width: 6rem;
+  height: 6rem;
+}
 
+.footerLinks {
+  ul li {
+    font-size: 10px;
+    list-style-type: none;
+    margin: 5px 0;
+    font-weight: 200;
+    @media only screen and (max-width: 920px) {
+      font-size: 12px !important;
+      font-weight: 300 !important;
+      margin: 0;
+    }
+  }
+
+  a {
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  a:hover {
+    font-size: 12px;
+    font-weight: 800 !important;
+  }
+}
+
+.redesFooter {
+  color: white !important;
+  list-style-type: none;
+  font-size: 20px;
+  @media only screen and (max-width: 920px) {
+    font-size: 30px !important;
+  }
+
+  a {
+    color: #FFFFFF;
+  }
+
+}
+
+.css-78trlr-MuiButtonBase-root-MuiIconButton-root {
+  color: #7acdd4 !important;
+}
+
+.bg-explora {
+  background-color: #005F73;
+}
+
+.btnIniciarSession {
+  background-color: #F0585F;
+  border-radius: 10px;
+  border: none;
+  color: white;
+  margin: auto;
+  width: auto;
+  transition: transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.btnIniciarSession:hover {
+  transform: scale(1.05);
+  color: white;
+}
+
+.nav-link {
+  color: white !important;
+}
+
+.nav-link:hover {
+  transform: scale(1.05);
+  font-weight: 700 !important;
+}
+
+.textCopy {
+  font-weight: 200;
+  font-size: 12px;
+
+  a {
+    color: white !important;
+    text-decoration: none;
+  }
+
+  a:hover {
+    transform: scale(1.05);
+    font-weight: 700 !important;
+  }
+}

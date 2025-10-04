@@ -1,10 +1,57 @@
 import React from "react";
 import { useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-
+import { useNavigate } from 'react-router-dom'; 
+// Importa useEffect si necesitas hacer algo después de la carga inicial o para efectos secundarios
+// import { useEffect } from 'react'; 
 
 function Formulario() {
   const [showPassword, setShowPassword] = useState(false);
+  const [noLista, setNoLista] = useState(''); // Estado para el Username (no_lista)
+  const [password, setPassword] = useState(''); // Estado para la Contraseña
+  const [mensajeError, setMensajeError] = useState(''); // Estado para mostrar errores
+  const navigate = useNavigate(); 
+
+const handleSubmit = async (e) => {
+    e.preventDefault(); 
+    setMensajeError(''); 
+    
+
+    try {
+      // ... (petición fetch al endpoint /login)
+      
+      const response = await fetch("http://localhost:3000/login", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          no_lista: noLista, 
+          contraseña: password 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Inicio de sesión exitoso: 
+        console.log("Inicio de sesión exitoso:", data.usuario);
+        
+        // 👈 REDIRECCIÓN AQUÍ
+        navigate('/index'); 
+        
+      } else {
+        // Error de inicio de sesión
+        setMensajeError(data.message || "Error al iniciar sesión.");
+        console.error("Error en el login:", data.message);
+      }
+    } catch (error) {
+      console.error("Error de red o del servidor:", error);
+      setMensajeError("No se pudo conectar con el servidor. Intente de nuevo.");
+    }
+  };
+
+// ...
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -21,34 +68,38 @@ function Formulario() {
                 <p className="my-3 text-general">
                   Ingresa tu username y contraseña:
                 </p>
+                
+                {/* Muestra el mensaje de error si existe */}
+                {mensajeError && (
+                    <p style={{ color: 'red', fontWeight: 'bold' }}>{mensajeError}</p>
+                )}
+                
                 <div className="row">
-                  <form
-                  // onSubmit={handleSubmit}
-                  >
+                  <form onSubmit={handleSubmit} /* Asigna la función handleSubmit */>
                     <div className="row d-block m-auto">
                       <div className="col-12 my-3 text-start">
                         <input
                           type="text"
                           inputMode="numeric"
-                          name="numero"
+                          name="no_lista" // Cambiado a no_lista para claridad
                           className="col-11 inputG px-3 py-2 mb-4"
-                          id="numero"
-                          placeholder="Username"
+                          id="no_lista" // Cambiado a no_lista
+                          placeholder="Username (Número de Lista)" // Indicando qué usar
                           required
                           maxLength="10"
-                          // value={numero}
-                          // onChange={(e) => setNumero(e.target.value)}
+                          value={noLista}
+                          onChange={(e) => setNoLista(e.target.value)} // Manejo del cambio
                         />
                         
                         <input
-                          name="correo"
+                          name="contraseña" // Cambiado a contrasena para claridad
                           className="inputG px-3 py-2 col-11"
-                          id="correo"
+                          id="contraseña" // Cambiado a contrasena
                           placeholder="Contraseña"
                           type={showPassword ? 'text' : 'password'}
                           required
-                          // value={correo}
-                          // onChange={(e) => setCorreo(e.target.value)}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)} // Manejo del cambio
                         />
                         <button
                           type="button"
@@ -57,15 +108,12 @@ function Formulario() {
                         >
                           {showPassword ? <FaEyeSlash /> : <FaEye />}
                         </button>
-                       =
-                        
                       </div>
                       <div className="col-11 my-3">
                         <button
                           type="submit"
                           id="submit-btn"
                           className="btnIngresarVerde py-2 px-3 col-lg-12"
-                          // disabled={!isValidForm}
                         >
                           Continuar
                         </button>
@@ -76,59 +124,7 @@ function Formulario() {
               </div>
             </div>
           </div>
-          {/* <div className="col-12 col-lg-7 text-center m-auto borderB">
-            <p className="my-5 txtSubtitle">
-              ¡Descarga la app y olvídate de complicaciones!
-            </p>
-            <div className="row justify-content-center mx-auto mb-lg-5 mb-auto">
-              <div className="col-4">
-                <img
-                  loading="lazy"
-                  src="https://d3jkoqalzfs5lw.cloudfront.net/imagenesPillo/Website/icono_app.svg"
-                  className="img-fluid img-diri-min align-items-center d-flex my-4 mx-auto"
-                  alt="appicon"
-                />
-              </div>
-              <div className="col-8 m-auto">
-                <p className="descApp">
-                  Activa la auto-recarga para ahorrar en cada recarga
-                </p>
-                <div className="row">
-                  <div className="col-6 mx-auto my-1">
-                    <a href="https://apps.apple.com/mx/app/pillofon/id1536302343">
-                      <img
-                        className="img-fluid d-block m-auto"
-                        src="https://d3jkoqalzfs5lw.cloudfront.net/imagesDiri/home/app_store.webp"
-                        alt="appstore"
-                      />
-                    </a>
-                  </div>
-                  <div className="col-6 mx-auto my-1">
-                    <a href="https://play.google.com/store/apps/details?id=mx.pillofon&hl=es_MX&pli=1">
-                      <img
-                        className="img-fluid d-block m-auto"
-                        src="https://d3jkoqalzfs5lw.cloudfront.net/imagesDiri/home/google_play.webp"
-                        alt="playstore"
-                      />
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div> */}
         </div>
-        {/* {isLoading && <Loading />}
-                <Modal show={showModal} onHide={handleClose} centered>
-                    <Modal.Body className="text-center">
-                        <p className="my-2 mx-auto titleModal">¡Ups!</p>
-                        <p className="text-center mx-auto mt-5 mb-3 contentModal">{mensajeError}</p>
-                        <div className="col-8 text-center m-auto">
-                            <button className="btnModal py-2" onClick={handleClose}>
-                                De acuerdo
-                            </button>
-                        </div>
-                    </Modal.Body>
-                </Modal> */}
       </div>
       <div className="line"></div>
     </div>
