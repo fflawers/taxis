@@ -1,6 +1,7 @@
 // src/pages/TaxisPage.jsx
 import { useEffect, useState } from "react";
 import Navbar from "../Nabvars/Nabvar";
+import IndexFooter from "../Footers/IndexFooter";
 
 function TaxisPage() {
   const [taxis, setTaxis] = useState([]);
@@ -10,7 +11,7 @@ function TaxisPage() {
     Modelo: "",
     Año: "",
     Placa: "",
-    no_lista: "" // <-- El ID del usuario seleccionado
+    no_lista: "", // <-- El ID del usuario seleccionado
   });
 
   const fetchTaxis = async () => {
@@ -41,7 +42,14 @@ function TaxisPage() {
   }, []);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === "Año") {
+      if (/^\d{0,4}$/.test(value)) {
+        setForm({ ...form, [name]: value });
+      }
+    } else {
+      setForm({ ...form, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -80,85 +88,128 @@ function TaxisPage() {
 
   return (
     <div>
-      <Navbar/>
-      <h1>Administrar Taxis</h1>
-      <form onSubmit={handleSubmit} style={{ marginBottom: "20px" }}>
-        <input
-          name="Marca"
-          placeholder="Marca"
-          value={form.Marca}
-          onChange={handleChange}
-          required
-        />
-        <input
-          name="Modelo"
-          placeholder="Modelo"
-          value={form.Modelo}
-          onChange={handleChange}
-          required
-        />
-        <input
-          name="Año"
-          type="date"
-          value={form.Año}
-          onChange={handleChange}
-          required
-        />
-        <input
-          name="Placa"
-          placeholder="Placa"
-          value={form.Placa}
-          onChange={handleChange}
-          required
-        />
+      <Navbar />
+      <h1 className="container text-center mt-4 fw-bold">Administrar Taxis</h1>
+      <div className="container">
+        <h2 className="justify-content-center">Agregar Taxi:</h2>
+        <form onSubmit={handleSubmit} className="container text-center my-4">
+          <div className="row g-3 justify-content-center">
+            <div className="col-md-2">
+              <input
+                type="text"
+                className="inputTP"
+                name="Marca"
+                placeholder="Marca"
+                value={form.Marca}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-        {/* Selector para asignar conductor */}
-        <select
-          name="no_lista"
-          value={form.no_lista}
-          onChange={handleChange}
-          required
-        >
-          <option value="">-- Selecciona un Conductor --</option>
-          {usuarios.map((u) => (
-            <option key={u.no_lista} value={u.no_lista}>
-              {u.nombre} {u.apellido_P}
-            </option>
-          ))}
-        </select>
+            <div className="col-md-2">
+              <input
+                type="text"
+                className="inputTP"
+                name="Modelo"
+                placeholder="Modelo"
+                value={form.Modelo}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-        <button type="submit">Agregar Taxi</button>
-      </form>
+            <div className="col-md-2">
+              <input
+                type="number"
+                className="inputTP"
+                name="Año"
+                placeholder="Año (ej. 2023)"
+                value={form.Año}
+                onChange={handleChange}
+                min="2000"
+                max="2025"
+                required
+              />
+            </div>
+
+            <div className="col-md-2">
+              <input
+                type="text"
+                className="inputTP"
+                name="Placa"
+                placeholder="Placa"
+                value={form.Placa}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="col-md-2">
+              <select
+                className="inputTP"
+                name="no_lista"
+                value={form.no_lista}
+                onChange={handleChange}
+                required
+              >
+                <option value="">-- Selecciona un Conductor --</option>
+                {usuarios.map((u) => (
+                  <option key={u.no_lista} value={u.no_lista}>
+                    {u.nombre} {u.apellido_P}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="col-md-2">
+              <button className="btn btn-green" type="submit">
+                Agregar
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
 
       {/* Tabla de taxis */}
-      <table border="1" style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr>
-            <th>Económico</th>
-            <th>Marca</th>
-            <th>Modelo</th>
-            <th>Placa</th>
-            <th>Conductor Asignado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {taxis.map((t) => (
-            <tr key={t.economico}>
-              <td>{t.economico}</td>
-              <td>{t.Marca}</td>
-              <td>{t.Modelo}</td>
-              <td>{t.Placa}</td>
-              <td>{t.nombre_conductor || "Sin asignar"}</td>
-              <td>
-                <button onClick={() => handleDelete(t.economico)}>
-                  Eliminar
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="mb-5 container">
+        <div>
+          <h2>Economicos desponibles:</h2>
+        </div>
+        <div className=" table-responsive">
+          <table className="table table-bordered table-hover align-middle text-center">
+            <thead className="table">
+              <tr>
+                <th scope="col">Económico</th>
+                <th scope="col">Marca</th>
+                <th scope="col">Modelo</th>
+                <th scope="col">Placa</th>
+                <th scope="col">Conductor Asignado</th>
+                <th scope="col">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {taxis.map((t) => (
+                <tr key={t.economico}>
+                  <td>{t.economico}</td>
+                  <td>{t.Marca}</td>
+                  <td>{t.Modelo}</td>
+                  <td>{t.Placa}</td>
+                  <td>{t.nombre_conductor || "Sin asignar"}</td>
+                  <td>
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={() => handleDelete(t.economico)}
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <IndexFooter />
     </div>
   );
 }

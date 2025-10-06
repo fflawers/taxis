@@ -21,7 +21,7 @@ function App() {
     <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index/>}/>
-          <Route path="/index" element={<Usuarios/>}/> 
+          <Route path="/inicio" element={<Usuarios/>}/> 
           <Route path="/usuarios" element={<UsuariosPage />} />
           <Route path="/taxis" element={<TaxisPage />} />
           {/* Aquí añadirás más rutas */}

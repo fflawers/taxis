@@ -206,6 +206,36 @@ input, button, select, textarea {
 
 
 /******************************** Navbar **********************************/
+.glass_nav {
+    background: #ffffff3b;
+    box-shadow: 0 4px 30px #0000001a;
+    backdrop-filter: blur(4.7px);
+    -webkit-backdrop-filter: blur(4.7px);
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+/* .navbar-toggler {
+    padding: var(--bs-navbar-toggler-padding-y) var(--bs-navbar-toggler-padding-x);
+    font-size: var(--bs-navbar-toggler-font-size);
+    line-height: 1;
+    color: var(--bs-navbar-color);
+    background-color: transparent;
+    border: var(--bs-border-width) solid var(--bs-navbar-toggler-border-color);
+    border-radius: var(--bs-navbar-toggler-border-radius);
+    transition: var(--bs-navbar-toggler-transition);
+} */
+.backgroundResponsive {
+    background-color: #F4D35E;
+    border-radius: 15px;
+}
+.imgLogoFekaTaxi{
+    width: 60% !important;
+}
+.nav-link {
+    color: #5C3D2E !important;
+}
+
 .nabvar-1{
  margin-bottom: 20px;
  border-bottom: 1px solid #ccc;
@@ -225,17 +255,72 @@ color: #000000;
 font-size: 1.1em;
 }
 
+
+
+/******************************** GENERALS **********************************/
+
+.btn-red{
+    background-color: #f86f68 !important;
+    border-radius: 10px !important;
+    border: none;
+    color: #fff;
+    font-weight: 500;
+    font-size: 15px !important;
+    width: 50%;
+    padding: .2em 3em;
+}
+
+.btn-green {
+    font-size: 15px !important;
+    background-color: #06bc50 !important;
+    margin: 10px  !important;
+    border-radius: 10px;
+    font-weight: 500 !important;
+    color: #fff !important;
+    width: 70%;
+    border: none;
+    padding: 0em 0em !important;
+    height: 1.7em;
+}
+
 /******************************** ReportesPage **********************************/
 
 
 
 /******************************** TaxisPage **********************************/
+/* Estilo base del contenedor del input */
+.inputTP {
+     color: #707070 !important;
+    border: 1px solid #F4D35E !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    width: 100% !important;
+    margin: 10px  !important;
+    height: 1.7em;
+    text-align: justify ;
+    padding-left: 15px;
+}
+
+.table td,
+.table th {
+  vertical-align: middle;
+}
+
+/* Suaviza la transición del hover */
+.table-hover tbody tr:hover {
+  background-color: #f0f8ff;
+  transition: background-color 0.2s ease-in-out;
+}
+
 
 
 
 /******************************** UsuariosPage **********************************/
-
-
+.textUP{
+  font-size: 1.2em;
+  font-weight: 500;
+  color: #707070;
+}
 
 
 /* ///////////////////////////////////////////////////////////// Footer ////////////////////////////////////////////////////////// */
@@ -307,10 +392,6 @@ font-size: 1.1em;
 .btnIniciarSession:hover {
   transform: scale(1.05);
   color: white;
-}
-
-.nav-link {
-  color: white !important;
 }
 
 .nav-link:hover {

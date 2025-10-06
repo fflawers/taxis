@@ -3,14 +3,48 @@ import { Link } from "react-router-dom";
 
 function Navbar() {
   return (
-    <nav className="nabvar-1 text-center">
-        <div className="justify-content-center">
-      <Link to="/index" className="text-nav">Inicio</Link>
-      <Link to="/usuarios" className="text-nav">Administrar Usuarios</Link>
-      <Link to="/taxis" className="text-nav">Administrar Taxis</Link>
-      {/* Aquí añadirás más enlaces para Reportes, Incidencias, etc. */}
-      </div>
-    </nav>
+    <div className="index-navbar glass_nav">
+      <nav className="pt-2 transition-all  navbar navbar-expand-lg navbar-light">
+        <div className="backgroundResponsive navbar-default py-1 container">
+          <a
+            href="/inicio"
+            className="mx-lg-3 mx-0 text-lg-end text-start navbar-brand"
+          >
+            <img
+              src="https://proyectotaxis.s3.us-east-2.amazonaws.com/taxilogo.png"
+              alt="Pillo_Logo"
+              className="img-fluid imgLogoFekaTaxi"
+            />
+          </a>
+          <div className="d-flex d-lg-none align-items-center"></div>
+          <button
+            aria-controls="navbarOffcanvas"
+            type="button"
+            aria-label="Toggle navigation"
+            className="hamburger navbar-toggler collapsed"
+          >
+            <span className="navbar-toggler-icon"></span>
+          </button>
+          <div
+            className="justify-content-center navbar-collapse collapse"
+            id="navbarOffcanvas"
+          >
+            <div className="d-none d-lg-flex navbar-nav">
+              <div className="nav-item dropdown"></div>
+              <a href="/inicio"  className="nav-link">
+                Inicio
+              </a>
+              <a href="/usuarios"  className="nav-link">
+                Administrar Usuarios
+              </a>
+              <a className="nav-link" href="/taxis">
+                Administrar Taxis
+              </a>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </div>
   );
 }
 

@@ -16,18 +16,18 @@ function IndexFooter() {
                 <div className="row d-flex justify-content-center pt-lg-5 pt-3">
                     {/* Sección de contacto */}
                     <div className="col-xl-4 col-12 text-center order-1">
-                        <p className="mb-1 mt-4"><b>CONTÁCTANOS</b></p>
-                        <p>Desde tu número marca al</p>
+                       
                         <div className="m-auto">
                             <img
                                 loading="lazy"
                                 className="img-fluid w-50 my-3"
-                                src="https://wa.me/5512148668"
+                                src="https://proyectotaxis.s3.us-east-2.amazonaws.com/Gemini_Generated_Image_yfb08kyfb08kyfb0-removebg-preview.png"
                                 alt="marcacion"
                             />
                         </div>
+                         <p className="mb-1 mt-4"><b>CONTÁCTANOS</b></p>
                         <p className="mb-3">
-                            o desde cualquier número al <br />
+                            Desde cualquier número al <br />
                             <a
                                 style={{ color: "white", textDecoration: "none" }}
                                 href="https://wa.me/5512148668"
@@ -44,7 +44,7 @@ function IndexFooter() {
                     <div className="col-xl-12">
                         <p className="text-center textCopy">
 
-                            <a href="https://github.com/fflawers/">Desarrollado por FFG.</a>
+                            <a href="https://github.com/fflawers/">Desarrollado por Fernando Flores García.</a>
                         </p>
                     </div>
                 </div>

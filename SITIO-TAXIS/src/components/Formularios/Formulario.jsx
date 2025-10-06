@@ -38,7 +38,7 @@ const handleSubmit = async (e) => {
         console.log("Inicio de sesión exitoso:", data.usuario);
         
         // 👈 REDIRECCIÓN AQUÍ
-        navigate('/index'); 
+        navigate('/inicio'); 
         
       } else {
         // Error de inicio de sesión

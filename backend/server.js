@@ -56,7 +56,7 @@ app.post("/login", (req, res) => {
 // ===============================================
 // 🚀 ENDPOINTS PARA LA TABLA USUARIO
 // ===============================================
-// ✅ CREATE (insertar usuario)
+//  CREATE (insertar usuario)
 app.post("/usuarios", (req, res) => {
   const { rol, contraseña, nombre, apellido_P, apellido_M, Edad, Fecha_de_nacimiento } = req.body;
   const sql = `
@@ -69,7 +69,7 @@ app.post("/usuarios", (req, res) => {
   });
 });
 
-// ✅ READ (todos los usuarios)
+//  READ (todos los usuarios)
 app.get("/usuarios", (req, res) => {
   db.query("SELECT * FROM Usuario", (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -77,7 +77,7 @@ app.get("/usuarios", (req, res) => {
   });
 });
 
-// ✅ READ (usuario por id)
+//  READ (usuario por id)
 app.get("/usuarios/:id", (req, res) => {
   const { id } = req.params;
   db.query("SELECT * FROM Usuario WHERE no_lista = ?", [id], (err, result) => {
@@ -87,7 +87,7 @@ app.get("/usuarios/:id", (req, res) => {
   });
 });
 
-// ✅ UPDATE (actualizar usuario)
+//  UPDATE (actualizar usuario)
 app.put("/usuarios/:id", (req, res) => {
   const { id } = req.params;
   const { rol, contraseña, nombre, apellido_P, apellido_M, Edad, Fecha_de_nacimiento } = req.body;
@@ -102,7 +102,7 @@ app.put("/usuarios/:id", (req, res) => {
   });
 });
 
-// ✅ DELETE (eliminar usuario)
+//  DELETE (eliminar usuario)
 app.delete("/usuarios/:id", (req, res) => {
   const { id } = req.params;
   db.query("DELETE FROM Usuario WHERE no_lista = ?", [id], (err, result) => {
@@ -117,7 +117,7 @@ app.delete("/usuarios/:id", (req, res) => {
 // 🚀 ENDPOINTS PARA LA TABLA TAXI
 // ===============================================
 
-// ✅ CREATE (insertar taxi)
+//  CREATE (insertar taxi)
 app.post("/taxis", (req, res) => {
   const { Marca, Modelo, Año, Placa, no_lista } = req.body;
   const sql = `
@@ -130,7 +130,7 @@ app.post("/taxis", (req, res) => {
   });
 });
 
-// ✅ READ (todos los taxis con el nombre del conductor)
+//  READ (todos los taxis con el nombre del conductor)
 app.get("/taxis", (req, res) => {
   const sql = `
     SELECT 
@@ -145,7 +145,7 @@ app.get("/taxis", (req, res) => {
   });
 });
 
-// ✅ UPDATE (actualizar taxi)
+//  UPDATE (actualizar taxi)
 app.put("/taxis/:id", (req, res) => {
   const { id } = req.params;
   const { Marca, Modelo, Año, Placa, no_lista } = req.body;
@@ -160,7 +160,7 @@ app.put("/taxis/:id", (req, res) => {
   });
 });
 
-// ✅ DELETE (eliminar taxi)
+//  DELETE (eliminar taxi)
 app.delete("/taxis/:id", (req, res) => {
   const { id } = req.params;
   db.query("DELETE FROM Taxi WHERE economico = ?", [id], (err, result) => {
@@ -173,5 +173,5 @@ app.delete("/taxis/:id", (req, res) => {
 
 // Servidor
 app.listen(3000, () => {
-  console.log("🚀 Servidor backend corriendo en http://localhost:3000");
+  console.log(" Servidor backend corriendo en http://localhost:3000");
 });
