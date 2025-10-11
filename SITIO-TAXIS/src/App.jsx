@@ -3,6 +3,7 @@ import UsuariosPage from "./components/views/UsuariosPage";
 import TaxisPage from "./components/views/TaxisPage";
 import Index from "./components";
 import Usuarios from "./components/views/Usuarios";
+import TaxistasPage from "./components/viewsTaxis/TaxistasPage";
 
 
 
@@ -24,7 +25,9 @@ function App() {
           <Route path="/inicio" element={<Usuarios/>}/> 
           <Route path="/usuarios" element={<UsuariosPage />} />
           <Route path="/taxis" element={<TaxisPage />} />
-          {/* Aquí añadirás más rutas */}
+          <Route path="/taxistas" element={<TaxistasPage />} />
+
+          
         </Routes>
     </BrowserRouter>
   );

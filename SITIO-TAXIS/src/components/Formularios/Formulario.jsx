@@ -1,45 +1,55 @@
 import React from "react";
-import { useState } from 'react';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom'; 
+import { useState } from "react";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 // Importa useEffect si necesitas hacer algo después de la carga inicial o para efectos secundarios
-// import { useEffect } from 'react'; 
+// import { useEffect } from 'react';
 
 function Formulario() {
   const [showPassword, setShowPassword] = useState(false);
-  const [noLista, setNoLista] = useState(''); // Estado para el Username (no_lista)
-  const [password, setPassword] = useState(''); // Estado para la Contraseña
-  const [mensajeError, setMensajeError] = useState(''); // Estado para mostrar errores
-  const navigate = useNavigate(); 
-
-const handleSubmit = async (e) => {
-    e.preventDefault(); 
-    setMensajeError(''); 
-    
+  const [noLista, setNoLista] = useState(""); // Estado para el Username (no_lista)
+  const [password, setPassword] = useState(""); // Estado para la Contraseña
+  const [mensajeError, setMensajeError] = useState(""); // Estado para mostrar errores
+  const navigate = useNavigate();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMensajeError("");
 
     try {
       // ... (petición fetch al endpoint /login)
-      
+
       const response = await fetch("http://localhost:3000/login", {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
-          no_lista: noLista, 
-          contraseña: password 
+        body: JSON.stringify({
+          no_lista: noLista,
+          contraseña: password,
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Inicio de sesión exitoso: 
+        // ✅ Declaramos la variable antes de usarla
+        const rol = data.rol?.toLowerCase();
+
         console.log("Inicio de sesión exitoso:", data.usuario);
-        
-        // 👈 REDIRECCIÓN AQUÍ
-        navigate('/inicio'); 
-        
+        console.log("Rol recibido:", data.rol);
+        console.log(
+          "Redirigiendo a:",
+          rol === "admin" ? "/inicio" : "/taxistas"
+        );
+
+        // ✅ Redirección según el rol
+        if (rol === "admin") {
+          navigate("/inicio");
+        } else if (rol === "taxista") {
+          navigate("/taxistas");
+        } else {
+          console.warn("Rol no reconocido:", data.rol);
+        }
       } else {
         // Error de inicio de sesión
         setMensajeError(data.message || "Error al iniciar sesión.");
@@ -51,7 +61,7 @@ const handleSubmit = async (e) => {
     }
   };
 
-// ...
+  // ...
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -68,14 +78,18 @@ const handleSubmit = async (e) => {
                 <p className="my-3 text-general">
                   Ingresa tu username y contraseña:
                 </p>
-                
+
                 {/* Muestra el mensaje de error si existe */}
                 {mensajeError && (
-                    <p style={{ color: 'red', fontWeight: 'bold' }}>{mensajeError}</p>
+                  <p style={{ color: "red", fontWeight: "bold" }}>
+                    {mensajeError}
+                  </p>
                 )}
-                
+
                 <div className="row">
-                  <form onSubmit={handleSubmit} /* Asigna la función handleSubmit */>
+                  <form
+                    onSubmit={handleSubmit} /* Asigna la función handleSubmit */
+                  >
                     <div className="row d-block m-auto">
                       <div className="col-12 my-3 text-start">
                         <input
@@ -90,13 +104,13 @@ const handleSubmit = async (e) => {
                           value={noLista}
                           onChange={(e) => setNoLista(e.target.value)} // Manejo del cambio
                         />
-                        
+
                         <input
                           name="contraseña" // Cambiado a contrasena para claridad
                           className="inputG px-3 py-2 col-11"
                           id="contraseña" // Cambiado a contrasena
                           placeholder="Contraseña"
-                          type={showPassword ? 'text' : 'password'}
+                          type={showPassword ? "text" : "password"}
                           required
                           value={password}
                           onChange={(e) => setPassword(e.target.value)} // Manejo del cambio
