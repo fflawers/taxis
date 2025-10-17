@@ -17,6 +17,12 @@ function encrypt(text) {
 }
 
 function decrypt(text) {
+  // Verificación de seguridad: si el texto es nulo, inválido o no contiene ':',
+  // significa que no fue encriptado por nuestro sistema, así que lo devolvemos tal cual.
+  if (!text || typeof text !== 'string' || !text.includes(':')) {
+    return text;
+  }
+
   try {
     const textParts = text.split(':');
     const iv = Buffer.from(textParts.shift(), 'hex');
@@ -27,7 +33,8 @@ function decrypt(text) {
     return decrypted.toString();
   } catch (error) {
     console.error("Fallo al desencriptar:", error);
-    return null;
+    // Si falla por alguna razón, devolvemos el texto original para no romper la aplicación.
+    return text; 
   }
 }
 

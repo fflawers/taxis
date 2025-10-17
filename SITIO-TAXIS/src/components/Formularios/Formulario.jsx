@@ -25,7 +25,7 @@ function Formulario() {
         },
         body: JSON.stringify({
           no_lista: noLista,
-          contraseña: password,
+          contrasena: password,
         }),
       });
 
@@ -106,9 +106,9 @@ function Formulario() {
                         />
 
                         <input
-                          name="contraseña" // Cambiado a contrasena para claridad
+                          name="contrasena" // Cambiado a contrasena para claridad
                           className="inputG px-3 py-2 col-11"
-                          id="contraseña" // Cambiado a contrasena
+                          id="contrasena" // Cambiado a contrasena
                           placeholder="Contraseña"
                           type={showPassword ? "text" : "password"}
                           required

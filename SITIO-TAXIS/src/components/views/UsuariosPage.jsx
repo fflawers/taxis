@@ -6,7 +6,7 @@ function UsuariosPage() {
   const [usuarios, setUsuarios] = useState([]);
   const [form, setForm] = useState({
     rol: "",
-    contraseña: "",
+    contrasena: "",
     nombre: "",
     apellido_P: "",
     apellido_M: "",
@@ -43,7 +43,7 @@ function UsuariosPage() {
       .then(() => {
         setForm({
           rol: "",
-          contraseña: "",
+          contrasena: "",
           nombre: "",
           apellido_P: "",
           apellido_M: "",
@@ -85,9 +85,9 @@ function UsuariosPage() {
           <div className="col-md-3">
             <input
               className="inputTP"
-              name="contraseña"
+              name="contrasena"
               placeholder="Contraseña"
-              value={form.contraseña}
+              value={form.contrasena}
               onChange={handleChange}
               required
             />
