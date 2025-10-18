@@ -30,15 +30,16 @@ function TaxisPage() {
   };
 
   const fetchUsuarios = async () => {
-    try {
-      const res = await fetch("http://localhost:3000/usuarios");
-      if (!res.ok) throw new Error("Error al obtener usuarios");
-      const data = await res.json();
-      setUsuarios(data);
-    } catch (err) {
-      console.error("Error al obtener usuarios:", err);
-    }
-  };
+  try {
+    // ✅ APUNTAMOS AL ENDPOINT QUE SOLO TRAE TAXISTAS
+    const res = await fetch("http://localhost:3000/usuarios/taxistas");
+    if (!res.ok) throw new Error("Error al obtener usuarios");
+    const data = await res.json();
+    setUsuarios(data);
+  } catch (err) {
+    console.error("Error al obtener usuarios:", err);
+  }
+};
 
   useEffect(() => {
     fetchTaxis();

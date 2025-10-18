@@ -65,12 +65,10 @@ function UsuariosPage() {
 
   // Eliminar usuario
   const handleDelete = (id) => {
-    if (window.confirm("¿Estás seguro de que quieres eliminar este usuario?")) {
         fetch(`http://localhost:3000/usuarios/${id}`, { method: "DELETE" })
         .then((res) => res.json())
         .then(() => fetchUsuarios())
         .catch((err) => console.error(err));
-    }
   };
 
   // ✅ --- NUEVAS FUNCIONES PARA LA EDICIÓN ---

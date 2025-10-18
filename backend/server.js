@@ -191,34 +191,6 @@ app.get("/usuarios", (req, res) => {
 });
 
 
-// ✅ READ (usuario por id) - CON DESENCRIPTACIÓN
-app.get("/usuarios/:id", (req, res) => {
-  const { id } = req.params;
-  // Excluimos la contraseña del SELECT por seguridad
-  db.query("SELECT no_lista, rol, nombre, apellido_P, apellido_M, Edad, Fecha_de_nacimiento FROM Usuario WHERE no_lista = ?", [id], (err, result) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (result.length === 0) return res.status(404).json({ message: "Usuario no encontrado" });
-
-    const usuarioEncriptado = result[0];
-    
-    try {
-      // Desencriptamos los campos para enviarlos
-      const usuarioDesencriptado = {
-        ...usuarioEncriptado,
-        nombre: decrypt(usuarioEncriptado.nombre),
-        apellido_P: decrypt(usuarioEncriptado.apellido_P),
-        apellido_M: decrypt(usuarioEncriptado.apellido_M),
-        Edad: parseInt(decrypt(usuarioEncriptado.Edad), 10),
-        Fecha_de_nacimiento: decrypt(usuarioEncriptado.Fecha_de_nacimiento)
-      };
-      res.json(usuarioDesencriptado);
-
-    } catch(e) {
-      console.error(`Fallo al desencriptar datos para el usuario ${id}:`, e);
-      return res.status(500).json({ message: "Error al procesar los datos del usuario." });
-    }
-  });
-});
 
 
 // ✅ UPDATE (actualizar usuario) - CON ENCRIPTACIÓN
@@ -287,38 +259,38 @@ app.delete("/usuarios/:id", (req, res) => {
 // ===============================================
 // (Tus endpoints de taxi ya están correctos, los dejo aquí por completitud)
 
-// CREATE (insertar taxi) 
-// ✅ CREATE (insertar taxi) - VERSIÓN MEJORADA Y ROBUSTA
+// ✅ CREATE (insertar taxi) - CON VALIDACIÓN DE ROL
 app.post("/taxis", (req, res) => {
-  // Para depurar, vemos qué datos llegan
-  console.log("Recibido para crear taxi:", req.body); 
-
   const { Marca, Modelo, Año, Placa, no_lista } = req.body;
 
-  // Verificación básica de que los datos no estén vacíos
   if (!Marca || !Modelo || !Año || !Placa || !no_lista) {
     return res.status(400).json({ message: "Todos los campos son obligatorios." });
   }
 
-  try {
-    const encryptedPlaca = encrypt(Placa);
+  // 1. Verificar el rol del usuario primero
+  const checkRoleSql = "SELECT rol FROM usuario WHERE no_lista = ?";
+  db.query(checkRoleSql, [no_lista], (err, results) => {
+    if (err || results.length === 0 || results[0].rol !== 'Taxista') {
+      return res.status(403).json({ message: "Operación no permitida: El conductor seleccionado no es un taxista." });
+    }
 
-    const sql = `INSERT INTO Taxi (Marca, Modelo, Año, Placa, no_lista) VALUES (?, ?, ?, ?, ?)`;
-    
-    db.query(sql, [Marca, Modelo, Año, encryptedPlaca, no_lista], (err, result) => {
-      // Si hay un error de la base de datos (como una placa muy larga)
-      if (err) {
-        console.error("Error al insertar taxi en la BD:", err);
-        return res.status(500).json({ message: "Error al guardar en la base de datos.", error: err.message });
-      }
-      res.status(201).json({ message: "Taxi creado exitosamente", id: result.insertId });
-    });
-
-  } catch (error) {
-    // Si la función de encriptación falla
-    console.error("Error durante la encriptación de la placa:", error);
-    return res.status(500).json({ message: "Error interno del servidor al procesar los datos." });
-  }
+    // 2. Si el rol es correcto, proceder con la inserción
+    try {
+      const encryptedPlaca = encrypt(Placa);
+      const sql = `INSERT INTO Taxi (Marca, Modelo, Año, Placa, no_lista) VALUES (?, ?, ?, ?, ?)`;
+      
+      db.query(sql, [Marca, Modelo, Año, encryptedPlaca, no_lista], (err, result) => {
+        if (err) {
+          console.error("Error al insertar taxi en la BD:", err);
+          return res.status(500).json({ message: "Error al guardar en la base de datos.", error: err.message });
+        }
+        res.status(201).json({ message: "Taxi creado exitosamente", id: result.insertId });
+      });
+    } catch (error) {
+      console.error("Error durante la encriptación de la placa:", error);
+      return res.status(500).json({ message: "Error interno del servidor." });
+    }
+  });
 });
 
 // ✅ READ (todos los taxis) - VERSIÓN CORREGIDA Y ROBUSTA
@@ -383,38 +355,38 @@ app.delete("/taxis/:id", (req, res) => {
 });
 
 
-// ✅ UPDATE (actualizar taxi) - CON ENCRIPTACIÓN
+// ✅ UPDATE (actualizar taxi) - CON VALIDACIÓN DE ROL
 app.put("/taxis/:id", (req, res) => {
-  const { id } = req.params; // 'id' es el 'economico' del taxi
+  const { id } = req.params;
   const { Marca, Modelo, Año, Placa, no_lista } = req.body;
 
-  try {
-    // Objeto con los campos a actualizar
-    const updates = {
-      Marca,
-      Modelo,
-      Año,
-      no_lista, // El ID del nuevo conductor asignado
-      Placa: encrypt(Placa), // Siempre encriptamos la placa
-    };
+  // 1. Verificar el rol del usuario
+  const checkRoleSql = "SELECT rol FROM usuario WHERE no_lista = ?";
+  db.query(checkRoleSql, [no_lista], (err, results) => {
+    if (err || results.length === 0 || results[0].rol !== 'Taxista') {
+      return res.status(403).json({ message: "Operación no permitida: El conductor seleccionado no es un taxista." });
+    }
 
-    const sql = `UPDATE Taxi SET ? WHERE economico = ?`;
-    
-    db.query(sql, [updates, id], (err, result) => {
-      if (err) {
-        console.error("Error al actualizar taxi:", err);
-        return res.status(500).json({ error: err.message });
-      }
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: "Taxi no encontrado" });
-      }
-      res.json({ message: "Taxi actualizado exitosamente" });
-    });
-
-  } catch (error) {
-    console.error("Error durante el proceso de actualización del taxi:", error);
-    return res.status(500).json({ message: "Error interno del servidor." });
-  }
+    // 2. Si es correcto, proceder con la actualización
+    try {
+      const updates = { Marca, Modelo, Año, no_lista, Placa: encrypt(Placa) };
+      const sql = `UPDATE Taxi SET ? WHERE economico = ?`;
+      
+      db.query(sql, [updates, id], (err, result) => {
+        if (err) {
+          console.error("Error al actualizar taxi:", err);
+          return res.status(500).json({ error: err.message });
+        }
+        if (result.affectedRows === 0) {
+          return res.status(404).json({ message: "Taxi no encontrado" });
+        }
+        res.json({ message: "Taxi actualizado exitosamente" });
+      });
+    } catch (error) {
+      console.error("Error durante el proceso de actualización del taxi:", error);
+      return res.status(500).json({ message: "Error interno del servidor." });
+    }
+  });
 });
 
 
@@ -473,6 +445,37 @@ app.get("/usuarios/taxistas", (req, res) => {
     res.json(taxistasDesencriptados);
   });
 });
+
+// ✅ READ (usuario por id) - CON DESENCRIPTACIÓN
+app.get("/usuarios/:id", (req, res) => {
+  const { id } = req.params;
+  // Excluimos la contraseña del SELECT por seguridad
+  db.query("SELECT no_lista, rol, nombre, apellido_P, apellido_M, Edad, Fecha_de_nacimiento FROM Usuario WHERE no_lista = ?", [id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (result.length === 0) return res.status(404).json({ message: "Usuario no encontrado" });
+
+    const usuarioEncriptado = result[0];
+    
+    try {
+      // Desencriptamos los campos para enviarlos
+      const usuarioDesencriptado = {
+        ...usuarioEncriptado,
+        nombre: decrypt(usuarioEncriptado.nombre),
+        apellido_P: decrypt(usuarioEncriptado.apellido_P),
+        apellido_M: decrypt(usuarioEncriptado.apellido_M),
+        Edad: parseInt(decrypt(usuarioEncriptado.Edad), 10),
+        Fecha_de_nacimiento: decrypt(usuarioEncriptado.Fecha_de_nacimiento)
+      };
+      res.json(usuarioDesencriptado);
+
+    } catch(e) {
+      console.error(`Fallo al desencriptar datos para el usuario ${id}:`, e);
+      return res.status(500).json({ message: "Error al procesar los datos del usuario." });
+    }
+  });
+});
+
+
 
 // READ (obtener todas las incidencias CON el nombre del conductor) - VERSIÓN CORREGIDA
 app.get("/incidencias", (req, res) => {
@@ -566,6 +569,197 @@ app.delete("/incidencias/:id", (req, res) => {
     res.json({ message: "Incidencia eliminada exitosamente" });
   });
 });
+
+
+// ===============================================
+// 🚀 ENDPOINTS PARA LA TABLA ACUERDO
+// ===============================================
+
+// CREATE (insertar acuerdo)
+app.post("/acuerdos", (req, res) => {
+  const { Descripcion, id_incidencia } = req.body;
+  const sql = "INSERT INTO acuerdo (Descripcion, id_incidencia) VALUES (?, ?)";
+  
+  db.query(sql, [Descripcion, id_incidencia], (err, result) => {
+    if (err) {
+      console.error("Error al crear acuerdo:", err);
+      return res.status(500).json({ message: "Error interno del servidor." });
+    }
+    res.status(201).json({ message: "Acuerdo creado", id: result.insertId });
+  });
+});
+
+// READ (obtener todos los acuerdos CON la descripción de la incidencia)
+app.get("/acuerdos", (req, res) => {
+  const sql = `
+    SELECT 
+      a.id_acuerdo,
+      a.Descripcion,
+      a.id_incidencia,
+      i.descripcion AS incidencia_descripcion
+    FROM acuerdo a
+    LEFT JOIN incidencia i ON a.id_incidencia = i.id_incidencia
+  `;
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Error al obtener acuerdos:", err);
+      return res.status(500).json({ message: "Error interno del servidor." });
+    }
+    res.json(results);
+  });
+});
+
+// UPDATE (actualizar acuerdo)
+app.put("/acuerdos/:id", (req, res) => {
+  const { id } = req.params;
+  const { Descripcion, id_incidencia } = req.body;
+  const sql = "UPDATE acuerdo SET Descripcion = ?, id_incidencia = ? WHERE id_acuerdo = ?";
+
+  db.query(sql, [Descripcion, id_incidencia, id], (err, result) => {
+    if (err) {
+      console.error("Error al actualizar acuerdo:", err);
+      return res.status(500).json({ message: "Error interno del servidor." });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Acuerdo no encontrado" });
+    }
+    res.json({ message: "Acuerdo actualizado" });
+  });
+});
+
+// DELETE (eliminar acuerdo)
+app.delete("/acuerdos/:id", (req, res) => {
+  const { id } = req.params;
+  const sql = "DELETE FROM acuerdo WHERE id_acuerdo = ?";
+  
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      // Manejar error si el acuerdo está en uso en un reporte
+      if (err.code === 'ER_ROW_IS_REFERENCED_2') {
+        return res.status(400).json({ message: "No se puede eliminar: el acuerdo está en uso en un reporte." });
+      }
+      console.error("Error al eliminar acuerdo:", err);
+      return res.status(500).json({ message: "Error interno del servidor." });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Acuerdo no encontrado" });
+    }
+    res.json({ message: "Acuerdo eliminado exitosamente" });
+  });
+});
+
+// ===============================================
+// 🚀 ENDPOINTS PARA LA TABLA REPORTE
+// ===============================================
+
+// CREATE (insertar reporte)
+app.post("/reportes", (req, res) => {
+  // El campo 'nombre' en la tabla parece ser para el nombre del reportante, no lo usaremos si tenemos el no_lista.
+  const { no_lista, economico, Fecha_Reporte, Observaciones, id_incidencia, id_acuerdo } = req.body;
+  const sql = `
+    INSERT INTO reporte (no_lista, economico, Fecha_Reporte, Observaciones, id_incidencia, id_acuerdo) 
+    VALUES (?, ?, ?, ?, ?, ?)
+  `;
+  
+  db.query(sql, [no_lista, economico, Fecha_Reporte, Observaciones, id_incidencia, id_acuerdo], (err, result) => {
+    if (err) {
+      console.error("Error al crear reporte:", err);
+      return res.status(500).json({ message: "Error interno del servidor." });
+    }
+    res.status(201).json({ message: "Reporte creado", id: result.insertId });
+  });
+});
+
+// READ (obtener todos los reportes con toda la información relacionada)
+app.get("/reportes", (req, res) => {
+  const sql = `
+    SELECT 
+      r.id_reporte,
+      r.Fecha_Reporte,
+      r.Observaciones,
+      r.no_lista,
+      r.economico,
+      r.id_incidencia,
+      r.id_acuerdo,
+      u.nombre AS nombre_conductor_enc,
+      u.apellido_P AS apellido_conductor_enc,
+      t.Placa AS placa_taxi_enc,
+      i.descripcion AS incidencia_descripcion,
+      ac.Descripcion AS acuerdo_descripcion
+    FROM reporte r
+    LEFT JOIN usuario u ON r.no_lista = u.no_lista
+    LEFT JOIN taxi t ON r.economico = t.economico
+    LEFT JOIN incidencia i ON r.id_incidencia = i.id_incidencia
+    LEFT JOIN acuerdo ac ON r.id_acuerdo = ac.id_acuerdo
+    ORDER BY r.Fecha_Reporte DESC
+  `;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Error al obtener reportes:", err);
+      return res.status(500).json({ message: "Error interno del servidor." });
+    }
+
+    // Desencriptamos los campos necesarios en JavaScript
+    const reportesDesencriptados = results.map(rep => {
+      try {
+        const nombre = rep.nombre_conductor_enc ? decrypt(rep.nombre_conductor_enc) : null;
+        const apellido = rep.apellido_conductor_enc ? decrypt(rep.apellido_conductor_enc) : null;
+        
+        return {
+          ...rep,
+          nombre_conductor: (nombre && apellido) ? `${nombre} ${apellido}` : "N/A",
+          placa_taxi: rep.placa_taxi_enc ? decrypt(rep.placa_taxi_enc) : "N/A"
+        };
+      } catch (e) {
+        console.error(`Fallo al procesar datos para el reporte ${rep.id_reporte}:`, e);
+        return { ...rep, nombre_conductor: 'Error', placa_taxi: 'Error' };
+      }
+    });
+
+    res.json(reportesDesencriptados);
+  });
+});
+
+// UPDATE (actualizar reporte)
+app.put("/reportes/:id", (req, res) => {
+  const { id } = req.params;
+  const { no_lista, economico, Fecha_Reporte, Observaciones, id_incidencia, id_acuerdo } = req.body;
+  const sql = `
+    UPDATE reporte SET no_lista = ?, economico = ?, Fecha_Reporte = ?, 
+    Observaciones = ?, id_incidencia = ?, id_acuerdo = ? 
+    WHERE id_reporte = ?
+  `;
+
+  db.query(sql, [no_lista, economico, Fecha_Reporte, Observaciones, id_incidencia, id_acuerdo, id], (err, result) => {
+    if (err) {
+      console.error("Error al actualizar reporte:", err);
+      return res.status(500).json({ message: "Error interno del servidor." });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Reporte no encontrado" });
+    }
+    res.json({ message: "Reporte actualizado" });
+  });
+});
+
+// DELETE (eliminar reporte)
+app.delete("/reportes/:id", (req, res) => {
+  const { id } = req.params;
+  const sql = "DELETE FROM reporte WHERE id_reporte = ?";
+  
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error("Error al eliminar reporte:", err);
+      return res.status(500).json({ message: "Error interno del servidor." });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Reporte no encontrado" });
+    }
+    res.json({ message: "Reporte eliminado exitosamente" });
+  });
+});
+
 
 // Servidor
 app.listen(3000, () => {

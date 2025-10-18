@@ -43,6 +43,9 @@ function Navbar() {
                <a className="nav-link" href="/incidencias">
                 Administrar Incidencias
               </a>
+               <a className="nav-link" href="/reports">
+                Administrar Reportes
+              </a>
             </div>
           </div>
         </div>

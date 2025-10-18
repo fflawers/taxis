@@ -1,4 +1,3 @@
-// src/pages/IncidenciasPage.jsx
 import { useEffect, useState } from "react";
 import Navbar from "../Nabvars/Nabvar";
 import IndexFooter from "../Footers/IndexFooter";
