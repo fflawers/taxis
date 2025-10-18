@@ -382,7 +382,195 @@ app.delete("/taxis/:id", (req, res) => {
   });
 });
 
+
+// ✅ UPDATE (actualizar taxi) - CON ENCRIPTACIÓN
+app.put("/taxis/:id", (req, res) => {
+  const { id } = req.params; // 'id' es el 'economico' del taxi
+  const { Marca, Modelo, Año, Placa, no_lista } = req.body;
+
+  try {
+    // Objeto con los campos a actualizar
+    const updates = {
+      Marca,
+      Modelo,
+      Año,
+      no_lista, // El ID del nuevo conductor asignado
+      Placa: encrypt(Placa), // Siempre encriptamos la placa
+    };
+
+    const sql = `UPDATE Taxi SET ? WHERE economico = ?`;
+    
+    db.query(sql, [updates, id], (err, result) => {
+      if (err) {
+        console.error("Error al actualizar taxi:", err);
+        return res.status(500).json({ error: err.message });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: "Taxi no encontrado" });
+      }
+      res.json({ message: "Taxi actualizado exitosamente" });
+    });
+
+  } catch (error) {
+    console.error("Error durante el proceso de actualización del taxi:", error);
+    return res.status(500).json({ message: "Error interno del servidor." });
+  }
+});
+
+
+
+// ===============================================
+// 🚀 ENDPOINTS PARA LA TABLA INCIDENCIA (ACTUALIZADOS)
+// ===============================================
+
+// CREATE (insertar incidencia con conductor) - CON VALIDACIÓN DE ROL
+app.post("/incidencias", (req, res) => {
+  const { descripcion, Observaciones, no_lista } = req.body;
+
+  // 1. Verificar el rol del usuario primero
+  const checkRoleSql = "SELECT rol FROM usuario WHERE no_lista = ?";
+  db.query(checkRoleSql, [no_lista], (err, results) => {
+    if (err || results.length === 0 || results[0].rol !== 'Taxista') {
+      return res.status(403).json({ message: "Operación no permitida: El usuario seleccionado no es un taxista." });
+    }
+
+    // 2. Si el rol es correcto, proceder con la inserción
+    const insertSql = "INSERT INTO incidencia (descripcion, Observaciones, no_lista) VALUES (?, ?, ?)";
+    db.query(insertSql, [descripcion, Observaciones, no_lista], (err, result) => {
+      if (err) {
+        console.error("Error al crear incidencia:", err);
+        return res.status(500).json({ message: "Error interno del servidor." });
+      }
+      res.status(201).json({ message: "Incidencia creada", id: result.insertId });
+    });
+  });
+});
+
+// ✅ GET (obtener SOLO usuarios con rol de 'Taxista')
+app.get("/usuarios/taxistas", (req, res) => {
+  const sql = "SELECT no_lista, rol, nombre, apellido_P FROM Usuario WHERE rol = 'Taxista'";
+  
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Error al obtener taxistas:", err);
+      return res.status(500).json({ error: err.message });
+    }
+    
+    // Desencriptamos los datos antes de enviarlos
+    const taxistasDesencriptados = results.map(user => {
+      try {
+        return {
+          ...user,
+          nombre: decrypt(user.nombre),
+          apellido_P: decrypt(user.apellido_P),
+        };
+      } catch (e) {
+        console.error(`Fallo al desencriptar datos para el usuario ${user.no_lista}:`, e);
+        return { ...user, nombre: 'Error de datos', apellido_P: '' };
+      }
+    });
+
+    res.json(taxistasDesencriptados);
+  });
+});
+
+// READ (obtener todas las incidencias CON el nombre del conductor) - VERSIÓN CORREGIDA
+app.get("/incidencias", (req, res) => {
+  // 1. Seleccionamos los campos encriptados por separado, SIN CONCAT
+  const sql = `
+    SELECT 
+      i.id_incidencia,
+      i.descripcion,
+      i.Observaciones,
+      i.no_lista,
+      u.nombre AS nombre_enc,      -- Traemos el nombre encriptado
+      u.apellido_P AS apellido_enc -- Traemos el apellido encriptado
+    FROM incidencia i
+    LEFT JOIN usuario u ON i.no_lista = u.no_lista
+  `;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Error al obtener incidencias:", err);
+      return res.status(500).json({ message: "Error interno del servidor." });
+    }
+
+    // 2. Desencriptamos y unimos los nombres en JavaScript
+    const incidenciasDesencriptadas = results.map(inc => {
+      try {
+        const nombre = inc.nombre_enc ? decrypt(inc.nombre_enc) : null;
+        const apellido = inc.apellido_enc ? decrypt(inc.apellido_enc) : null;
+
+        return {
+          // Mantenemos los datos de la incidencia
+          id_incidencia: inc.id_incidencia,
+          descripcion: inc.descripcion,
+          Observaciones: inc.Observaciones,
+          no_lista: inc.no_lista,
+          // 3. Creamos el campo 'nombre_conductor' con los datos ya desencriptados
+          nombre_conductor: (nombre && apellido) ? `${nombre} ${apellido}` : 'Sin asignar'
+        };
+      } catch (e) {
+        console.error(`Fallo al procesar datos para la incidencia ${inc.id_incidencia}:`, e);
+        return { ...inc, nombre_conductor: 'Error de datos' };
+      }
+    });
+
+    res.json(incidenciasDesencriptadas);
+  });
+});
+
+// UPDATE (actualizar incidencia) - CON VALIDACIÓN DE ROL
+app.put("/incidencias/:id", (req, res) => {
+  const { id } = req.params;
+  const { descripcion, Observaciones, no_lista } = req.body;
+  
+  // 1. Verificar el rol
+  const checkRoleSql = "SELECT rol FROM usuario WHERE no_lista = ?";
+  db.query(checkRoleSql, [no_lista], (err, results) => {
+    if (err || results.length === 0 || results[0].rol !== 'Taxista') {
+      return res.status(403).json({ message: "Operación no permitida: El usuario seleccionado no es un taxista." });
+    }
+
+    // 2. Si es correcto, actualizar
+    const updateSql = "UPDATE incidencia SET descripcion = ?, Observaciones = ?, no_lista = ? WHERE id_incidencia = ?";
+    db.query(updateSql, [descripcion, Observaciones, no_lista, id], (err, result) => {
+      if (err) {
+        console.error("Error al actualizar incidencia:", err);
+        return res.status(500).json({ message: "Error interno del servidor." });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: "Incidencia no encontrada" });
+      }
+      res.json({ message: "Incidencia actualizada" });
+    });
+  });
+});
+
+// DELETE (Este no necesita cambios en su lógica)
+app.delete("/incidencias/:id", (req, res) => {
+  const { id } = req.params;
+  const sql = "DELETE FROM incidencia WHERE id_incidencia = ?";
+  
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      if (err.code === 'ER_ROW_IS_REFERENCED_2') {
+        return res.status(400).json({ message: "No se puede eliminar: la incidencia está en uso en un reporte o acuerdo." });
+      }
+      console.error("Error al eliminar incidencia:", err);
+      return res.status(500).json({ message: "Error interno del servidor." });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Incidencia no encontrada" });
+    }
+    res.json({ message: "Incidencia eliminada exitosamente" });
+  });
+});
+
 // Servidor
 app.listen(3000, () => {
   console.log("Servidor backend corriendo en http://localhost:3000");
 });
+
+
+

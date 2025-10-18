@@ -40,6 +40,9 @@ function Navbar() {
               <a className="nav-link" href="/taxis">
                 Administrar Taxis
               </a>
+               <a className="nav-link" href="/incidencias">
+                Administrar Incidencias
+              </a>
             </div>
           </div>
         </div>
