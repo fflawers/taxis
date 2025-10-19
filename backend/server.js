@@ -760,6 +760,63 @@ app.delete("/reportes/:id", (req, res) => {
   });
 });
 
+// ===============================================
+// 🚀 ENDPOINTS ESPECIALIZADOS PARA TAXISTAS
+// ===============================================
+
+// GET (obtener reportes SOLO de un taxista específico)
+app.get("/reportes/taxista/:id", (req, res) => {
+  const taxistaId = req.params.id;
+  const sql = `
+    SELECT 
+      r.id_reporte, r.Fecha_Reporte, r.Observaciones,
+      t.Placa AS placa_taxi_enc,
+      i.descripcion AS incidencia_descripcion
+    FROM reporte r
+    LEFT JOIN taxi t ON r.economico = t.economico
+    LEFT JOIN incidencia i ON r.id_incidencia = i.id_incidencia
+    WHERE r.no_lista = ?  -- <-- El filtro clave
+    ORDER BY r.Fecha_Reporte DESC
+  `;
+
+  db.query(sql, [taxistaId], (err, results) => {
+    if (err) {
+      console.error("Error al obtener reportes del taxista:", err);
+      return res.status(500).json({ message: "Error interno del servidor." });
+    }
+    // Desencriptamos la placa
+    const reportesDesencriptados = results.map(rep => ({
+      ...rep,
+      placa_taxi: rep.placa_taxi_enc ? decrypt(rep.placa_taxi_enc) : "N/A"
+    }));
+    res.json(reportesDesencriptados);
+  });
+});
+
+// GET (obtener acuerdos de los reportes de un taxista específico)
+app.get("/acuerdos/taxista/:id", (req, res) => {
+  const taxistaId = req.params.id;
+  const sql = `
+    SELECT 
+      ac.id_acuerdo, ac.Descripcion,
+      r.id_reporte,
+      i.descripcion AS incidencia_descripcion
+    FROM acuerdo ac
+    INNER JOIN reporte r ON ac.id_acuerdo = r.id_acuerdo
+    INNER JOIN incidencia i ON ac.id_incidencia = i.id_incidencia
+    WHERE r.no_lista = ? -- <-- Filtramos por el taxista que hizo el reporte
+  `;
+
+  db.query(sql, [taxistaId], (err, results) => {
+    if (err) {
+      console.error("Error al obtener acuerdos del taxista:", err);
+      return res.status(500).json({ message: "Error interno del servidor." });
+    }
+    res.json(results);
+  });
+});
+
+
 
 // Servidor
 app.listen(3000, () => {

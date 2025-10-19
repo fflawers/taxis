@@ -2,6 +2,7 @@ import React from "react";
 import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../secure/AuthContext"
 // Importa useEffect si necesitas hacer algo después de la carga inicial o para efectos secundarios
 // import { useEffect } from 'react';
 
@@ -11,6 +12,7 @@ function Formulario() {
   const [password, setPassword] = useState(""); // Estado para la Contraseña
   const [mensajeError, setMensajeError] = useState(""); // Estado para mostrar errores
   const navigate = useNavigate();
+  const { login } = useAuth();
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensajeError("");
@@ -32,6 +34,7 @@ function Formulario() {
       const data = await response.json();
 
       if (response.ok) {
+        login(data.usuario);
         // ✅ Declaramos la variable antes de usarla
         const rol = data.rol?.toLowerCase();
 
@@ -114,6 +117,9 @@ function Formulario() {
                           required
                           value={password}
                           onChange={(e) => setPassword(e.target.value)} // Manejo del cambio
+                          onCopy={(e) => e.preventDefault()}
+                          onCut={(e) => e.preventDefault()}
+                          onPaste={(e) => e.preventDefault()}
                         />
                         <button
                           type="button"
