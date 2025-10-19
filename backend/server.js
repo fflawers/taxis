@@ -118,18 +118,14 @@ const saltRounds = 10;
 // ===============================================
 
 // ✅ CREATE (insertar usuario) - CON ENCRIPTACIÓN
-// ✅ CREATE (insertar usuario) - CON ENCRIPTACIÓN Y DEBUG
-// ✅ CREATE (insertar usuario) - CON DEPURACIÓN AVANZADA
 app.post("/usuarios", async (req, res) => {
-  console.log("1. Cuerpo de la petición recibido:", req.body); 
 
   // Vamos a extraer la contraseña de forma directa para evitar cualquier problema
   const contrasenaParaHashear = req.body.contrasena;
   const { rol, nombre, apellido_P, apellido_M, Edad, Fecha_de_nacimiento } = req.body;
 
   try {
-    // ✅ PASO CLAVE: Verificamos el valor JUSTO ANTES de usarlo
-    console.log("2. Contraseña que se va a hashear:", contrasenaParaHashear);
+
 
     // 1. Hashear la contraseña
     const hashedPassword = await bcrypt.hash(contrasenaParaHashear, saltRounds);
@@ -204,7 +200,7 @@ app.put("/usuarios/:id", async (req, res) => {
       rol,
       nombre: encrypt(nombre),
       apellido_P: encrypt(apellido_P),
-      apellido_M: encrypt(apellido_M),
+      apellido_M: encrypt(apellido_M || ''),
       Edad: encrypt(Edad.toString()),
       Fecha_de_nacimiento: encrypt(Fecha_de_nacimiento)
     };

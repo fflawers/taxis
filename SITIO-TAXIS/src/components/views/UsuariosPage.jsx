@@ -212,7 +212,7 @@ function UsuariosPage() {
         <ul className="list-group">
           {usuarios.map((u) => (
             <li className="list-group-item d-flex justify-content-between align-items-center" key={u.no_lista}>
-              <span>{u.nombre} {u.apellido_P} ({u.rol})</span>
+              <span>ID: {u.no_lista} - {u.nombre} {u.apellido_P} ({u.rol})</span>
               <div>
                 <button
                   className="btn mx-2 btn-sm btn-info"
