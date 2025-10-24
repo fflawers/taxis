@@ -625,8 +625,14 @@ app.get("/acuerdos/taxista/:id", async (req, res) => {
 });
 
 // ===============================================
-// 🚀 SERVIDOR
+// 🚀 SERVIDOR (VERSIÓN CORREGIDA PARA DESPLIEGUE)
 // ===============================================
-app.listen(3000, () => {
-  console.log("Servidor backend corriendo en http://localhost:3000");
+
+// 1. Obtiene el puerto que la plataforma nos da. Si no existe (en tu compu), usa el 3000.
+const PORT = process.env.PORT || 3000;
+
+// 2. Le decimos a Express que escuche en ese puerto y en la dirección 0.0.0.0
+//    '0.0.0.0' es crucial para que acepte conexiones dentro del entorno de Railway/Render.
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Servidor backend corriendo en el puerto ${PORT}`);
 });
