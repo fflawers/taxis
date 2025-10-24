@@ -21,7 +21,7 @@ const [form, setForm] = useState({
 
   const fetchTaxis = async () => {
     try {
-      const res = await fetch("http://localhost:3000/taxis");
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/taxis`);
       if (!res.ok) throw new Error("Error al obtener taxis");
       const data = await res.json();
       setTaxis(data);
@@ -32,7 +32,7 @@ const [form, setForm] = useState({
 
   const fetchUsuarios = async () => {
     try {
-      const res = await fetch("http://localhost:3000/usuarios/taxistas");
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/usuarios/taxistas`);
       if (!res.ok) throw new Error("Error al obtener usuarios");
       const data = await res.json();
       setUsuarios(data);
@@ -65,7 +65,7 @@ const [form, setForm] = useState({
       return;
     }
     try {
-      const res = await fetch("http://localhost:3000/taxis", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/taxis`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -84,7 +84,7 @@ const [form, setForm] = useState({
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`http://localhost:3000/taxis/${id}`, { method: "DELETE" });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/taxis/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Error al eliminar taxi");
       fetchTaxis();
     } catch (err) {
@@ -115,7 +115,7 @@ const [form, setForm] = useState({
     const id = taxiAEditar.economico;
 
     try {
-      const res = await fetch(`http://localhost:3000/taxis/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/taxis/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formEdicion),

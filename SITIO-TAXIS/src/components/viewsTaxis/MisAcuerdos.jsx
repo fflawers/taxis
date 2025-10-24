@@ -9,7 +9,7 @@ function MisAcuerdos() {
 
   useEffect(() => {
     if (user?.no_lista) {
-      fetch(`http://localhost:3000/acuerdos/taxista/${user.no_lista}`)
+      fetch(`${import.meta.env.VITE_API_URL}/acuerdos/taxista/${user.no_lista}`)
         .then(res => res.json())
         .then(data => setAcuerdos(data))
         .catch(err => console.error("Error al cargar mis acuerdos:", err));

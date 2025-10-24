@@ -21,11 +21,11 @@ function ReportesPage() {
   const fetchData = async () => {
     try {
       const [repRes, taxRes, taxisRes, incRes, acuRes] = await Promise.all([
-        fetch("http://localhost:3000/reportes"),
-        fetch("http://localhost:3000/usuarios/taxistas"),
-        fetch("http://localhost:3000/taxis"),
-        fetch("http://localhost:3000/incidencias"),
-        fetch("http://localhost:3000/acuerdos")
+        fetch(`${import.meta.env.VITE_API_URL}/reportes`),
+        fetch(`${import.meta.env.VITE_API_URL}/usuarios/taxistas`),
+        fetch(`${import.meta.env.VITE_API_URL}/taxis`),
+        fetch(`${import.meta.env.VITE_API_URL}/incidencias`),
+        fetch(`${import.meta.env.VITE_API_URL}/acuerdos`)
       ]);
       setReportes(await repRes.json());
       setTaxistas(await taxRes.json());
@@ -44,7 +44,7 @@ function ReportesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:3000/reportes", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/reportes`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form)
       });
@@ -57,7 +57,7 @@ function ReportesPage() {
   const handleDelete = async (id) => {
     if (!window.confirm("¿Seguro que quieres eliminar este reporte?")) return;
     try {
-      const res = await fetch(`http://localhost:3000/reportes/${id}`, { method: "DELETE" });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/reportes/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error((await res.json()).message);
       fetchData();
     } catch (error) { console.error("Error al eliminar reporte:", error); alert(`Error: ${error.message}`); }
@@ -84,7 +84,7 @@ function ReportesPage() {
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`http://localhost:3000/reportes/${reporteAEditar.id_reporte}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/reportes/${reporteAEditar.id_reporte}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formEdicion)
       });

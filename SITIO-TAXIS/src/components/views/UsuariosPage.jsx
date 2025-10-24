@@ -20,7 +20,7 @@ function UsuariosPage() {
   const [formEdicion, setFormEdicion] = useState(null);
 
   const fetchUsuarios = () => {
-    fetch("http://localhost:3000/usuarios")
+    fetch(`${import.meta.env.VITE_API_URL}/usuarios`)
       .then((res) => res.json())
       .then((data) => setUsuarios(data))
       .catch((err) => console.error(err));
@@ -36,7 +36,7 @@ function UsuariosPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    fetch("http://localhost:3000/usuarios", {
+    fetch(`${import.meta.env.VITE_API_URL}/usuarios`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form), // 'form' ya tiene las claves en minúsculas
@@ -59,7 +59,7 @@ function UsuariosPage() {
   };
 
   const handleDelete = (id) => {
-    fetch(`http://localhost:3000/usuarios/${id}`, { method: "DELETE" })
+    fetch(`${import.meta.env.VITE_API_URL}/usuarios/${id}`, { method: "DELETE" })
       .then((res) => res.json())
       .then(() => fetchUsuarios())
       .catch((err) => console.error(err));
@@ -93,7 +93,7 @@ function UsuariosPage() {
       delete datosAEnviar.contrasena;
     }
 
-    fetch(`http://localhost:3000/usuarios/${id}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/usuarios/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(datosAEnviar),

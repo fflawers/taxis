@@ -9,7 +9,7 @@ function MisReportes() {
 
   useEffect(() => {
     if (user?.no_lista) {
-      fetch(`http://localhost:3000/reportes/taxista/${user.no_lista}`)
+      fetch(`${import.meta.env.VITE_API_URL}/reportes/taxista/${user.no_lista}`)
         .then(res => res.json())
         .then(data => setReportes(data))
         .catch(err => console.error("Error al cargar mis reportes:", err));

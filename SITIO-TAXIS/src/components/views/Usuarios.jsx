@@ -9,7 +9,7 @@ function Usuarios() {
   
 
   useEffect(() => {
-    fetch("http://localhost:3000/usuarios") 
+    fetch(`${import.meta.env.VITE_API_URL}/usuarios`) 
       .then(res => res.json())
       .then(data => setUsuarios(data))
       .catch(err => console.error(err));

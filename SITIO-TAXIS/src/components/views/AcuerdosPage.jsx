@@ -13,7 +13,7 @@ function AcuerdosPage() {
 
   const fetchAcuerdos = async () => {
     try {
-      const res = await fetch("http://localhost:3000/acuerdos");
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/acuerdos`);
       const data = await res.json();
       setAcuerdos(data);
     } catch (error) { console.error("Error al obtener acuerdos:", error); }
@@ -21,7 +21,7 @@ function AcuerdosPage() {
 
   const fetchIncidencias = async () => {
     try {
-      const res = await fetch("http://localhost:3000/incidencias");
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/incidencias`);
       const data = await res.json();
       setIncidencias(data);
     } catch (error) { console.error("Error al obtener incidencias:", error); }
@@ -37,7 +37,7 @@ function AcuerdosPage() {
     e.preventDefault();
     if (!form.id_incidencia) { alert("Por favor, selecciona una incidencia."); return; }
     try {
-      const res = await fetch("http://localhost:3000/acuerdos", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/acuerdos`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
@@ -50,7 +50,7 @@ function AcuerdosPage() {
   const handleDelete = async (id) => {
     if (window.confirm("¿Seguro que quieres eliminar este acuerdo?")) {
       try {
-        const res = await fetch(`http://localhost:3000/acuerdos/${id}`, { method: "DELETE" });
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/acuerdos/${id}`, { method: "DELETE" });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message);
         fetchAcuerdos();
@@ -75,7 +75,7 @@ function AcuerdosPage() {
     e.preventDefault();
     const id = acuerdoAEditar.id_acuerdo;
     try {
-      const res = await fetch(`http://localhost:3000/acuerdos/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/acuerdos/${id}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formEdicion),
       });

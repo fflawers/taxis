@@ -14,7 +14,7 @@ function IncidenciasPage() {
 
   const fetchIncidencias = async () => {
     try {
-      const res = await fetch("http://localhost:3000/incidencias");
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/incidencias`);
       const data = await res.json();
       setIncidencias(data);
     } catch (error) {
@@ -24,7 +24,7 @@ function IncidenciasPage() {
 
   const fetchUsuarios = async () => {
     try {
-      const res = await fetch("http://localhost:3000/usuarios/taxistas");
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/usuarios/taxistas`);
       const data = await res.json();
       setUsuarios(data);
     } catch (error) {
@@ -48,7 +48,7 @@ function IncidenciasPage() {
       return;
     }
     try {
-      const res = await fetch("http://localhost:3000/incidencias", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/incidencias`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -67,7 +67,7 @@ function IncidenciasPage() {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`http://localhost:3000/incidencias/${id}`, { method: "DELETE" });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/incidencias/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
       fetchIncidencias();
@@ -99,7 +99,7 @@ function IncidenciasPage() {
         return;
     }
     try {
-      const res = await fetch(`http://localhost:3000/incidencias/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formEdicion),
