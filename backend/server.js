@@ -2,28 +2,24 @@ import express from "express";
 import cors from "cors";
 import bcrypt from "bcrypt";
 import { supabase } from "./supabaseClient.js";
-// Asegúrate que la ruta sea correcta
 import { encrypt, decrypt } from './crypto-utils.js';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-
+const saltRounds = 10;
 
 // ===============================================
 // 🚀 ENDPOINT PARA INICIO DE SESIÓN (LOGIN)
 // ===============================================
-
-// ✅ ENDPOINT PARA INICIO DE SESIÓN (LOGIN) - CON SUPABASE
 app.post("/login", async (req, res) => {
   const { no_lista, contrasena } = req.body;
 
-  // 1. Buscamos al usuario por su 'no_lista'
   const { data: results, error: dbError } = await supabase
     .from('usuario')
     .select('no_lista, rol, nombre, apellido_p, contrasena')
-    .eq('no_lista', no_lista); // .eq() es como hacer "WHERE no_lista = ?"
+    .eq('no_lista', no_lista);
 
   if (dbError) {
     console.error("Error de base de datos durante el login:", dbError);
@@ -38,16 +34,15 @@ app.post("/login", async (req, res) => {
   const hashedPasswordFromDB = usuario.contrasena;
 
   try {
-    // 2. Comparamos la contraseña (esta lógica no cambia)
     const match = await bcrypt.compare(contrasena, hashedPasswordFromDB);
 
     if (match) {
-      // 3. Desencriptamos los datos del usuario (esta lógica no cambia)
       const usuarioDesencriptado = {
         no_lista: usuario.no_lista,
         rol: usuario.rol,
         nombre: decrypt(usuario.nombre),
-        apellido_P: decrypt(usuario.apellido_P)
+        // ✨ CORREGIDO A MINÚSCULA
+        apellido_p: decrypt(usuario.apellido_p) 
       };
 
       return res.json({
@@ -63,150 +58,149 @@ app.post("/login", async (req, res) => {
     return res.status(500).json({ message: "Error interno del servidor." });
   }
 });
-// // UPDATE para hashear la contraseña si se cambia.
-// app.put("/usuarios/:id", async (req, res) => {
-//   const { id } = req.params;
-//   const { rol, contraseña, nombre, apellido_P, apellido_M, Edad, Fecha_de_nacimiento } = req.body;
-
-//   try {
-//     const hashedPassword = await bcrypt.hash(contraseña, saltRounds);
-//     const sql = `
-//       UPDATE Usuario SET rol=?, contraseña=?, nombre=?, apellido_P=?, apellido_M=?, Edad=?, Fecha_de_nacimiento=?
-//       WHERE no_lista=?
-//     `;
-//     db.query(sql, [rol, hashedPassword, nombre, apellido_P, apellido_M, Edad, Fecha_de_nacimiento, id], (err, result) => {
-//       if (err) return res.status(500).json({ error: err.message });
-//       if (result.affectedRows === 0) return res.status(404).json({ message: "Usuario no encontrado" });
-//       res.json({ message: "Usuario actualizado" });
-//     });
-//   } catch (error) {
-//     console.error("Error al actualizar usuario:", error);
-//     return res.status(500).json({ message: "Error interno del servidor." });
-//   }
-// });
 
 // ===============================================
 // 🚀 ENDPOINTS PARA LA TABLA USUARIO
 // ===============================================
-//  CREATE (insertar usuario)
 
-// Número de "rondas" de salting. 
-const saltRounds = 10;
-
-// ===============================================
-// 🚀 ENDPOINTS PARA LA TABLA USUARIO (MODIFICADOS)
-// ===============================================
-
-// ✅ CREATE (insertar usuario) - VERSIÓN FINAL CORREGIDA
+// ✅ CREATE (insertar usuario) - CON VALIDACIÓN
 app.post("/usuarios", async (req, res) => {
-  const saltRounds = 10;
-  // 1. Extraemos las propiedades del body, AHORA TODAS EN MINÚSCULAS
   const { rol, contrasena, nombre, apellido_p, apellido_m, edad, fecha_de_nacimiento } = req.body;
 
+  // ✨ --- VALIDACIÓN AÑADIDA --- ✨
+  // Comprobamos que todos los campos requeridos existan
+  if (!rol || !contrasena || !nombre || !apellido_p || !edad || !fecha_de_nacimiento) {
+    return res.status(400).json({ 
+      message: "Faltan campos obligatorios. Asegúrate de enviar: rol, contrasena, nombre, apellido_p, edad, fecha_de_nacimiento." 
+    });
+  }
+  // ✨ --- FIN DE LA VALIDACIÓN --- ✨
+
   try {
-    // 2. Hashear y encriptar usando las variables en minúsculas
     const hashedPassword = await bcrypt.hash(contrasena, saltRounds);
-    const encryptedNombre = encrypt(nombre);
-    const encryptedApellido_p = encrypt(apellido_p);
-    const encryptedApellido_m = apellido_m ? encrypt(apellido_m) : encrypt('');
-    const encryptedEdad = encrypt(edad.toString());
-    const encryptedFecha = encrypt(fecha_de_nacimiento);
+    const encryptedData = {
+      rol,
+      contrasena: hashedPassword,
+      nombre: encrypt(nombre),
+      apellido_p: encrypt(apellido_p),
+      apellido_m: apellido_m ? encrypt(apellido_m) : encrypt(''),
+      edad: encrypt(edad.toString()),
+      fecha_de_nacimiento: encrypt(fecha_de_nacimiento)
+    };
 
-    // 3. Insertar los datos en Supabase
-    const { data, error } = await supabase
-      .from('usuario')
-      .insert([
-        { 
-          rol: rol, 
-          contrasena: hashedPassword, 
-          nombre: encryptedNombre, 
-          apellido_p: encryptedApellido_p, // Asegúrate que aquí la clave sea minúscula
-          apellido_m: encryptedApellido_m, // Asegúrate que aquí la clave sea minúscula
-          edad: encryptedEdad,             // Asegúrate que aquí la clave sea minúscula
-          fecha_de_nacimiento: encryptedFecha // Asegúrate que aquí la clave sea minúscula
-        }
-      ])
-      .select();
-
-    if (error) {
-      console.error("Error al crear usuario en Supabase:", error);
-      return res.status(500).json({ error: error.message });
-    }
-
+    const { data, error } = await supabase.from('usuario').insert([encryptedData]).select();
+    
+    if (error) throw error;
+    
     res.status(201).json({ message: "Usuario creado exitosamente", usuario: data[0] });
 
-  } catch (processingError) {
-    console.error("Error al procesar datos para crear usuario:", processingError); 
-    return res.status(500).json({ message: "Error interno del servidor." });
+  } catch (err) {
+    console.error("Error al crear usuario:", err);
+    return res.status(500).json({ message: "Error interno del servidor.", error: err.message });
   }
 });
 
-// ✅ READ (todos los usuarios) - VERSIÓN FINAL CORREGIDA
-app.get("/usuarios", async (req, res) => {
-  // 1. La consulta a Supabase, AHORA CON MINÚSCULAS
-  const { data: results, error: err } = await supabase
-    .from('usuario')
-    .select('no_lista, rol, nombre, apellido_p, apellido_m, edad, fecha_de_nacimiento'); // ✨ CORREGIDO
 
-  // 2. Manejo de errores
-  if (err) {
-    console.error("Error al obtener usuarios:", err);
-    return res.status(500).json({ error: err.message });
+// ✅ READ (todos los usuarios)
+app.get("/usuarios", async (req, res) => {
+    // ... (Este endpoint ya estaba corregido y se mantiene igual)
+    const { data: results, error: err } = await supabase.from('usuario').select('no_lista, rol, nombre, apellido_p, apellido_m, edad, fecha_de_nacimiento');
+    if (err) { console.error("Error al obtener usuarios:", err); return res.status(500).json({ error: err.message }); }
+    const usuariosDesencriptados = results.map(user => {
+        try { return { no_lista: user.no_lista, rol: user.rol, nombre: decrypt(user.nombre), apellido_p: decrypt(user.apellido_p), apellido_m: decrypt(user.apellido_m), edad: parseInt(decrypt(user.edad), 10), fecha_de_nacimiento: decrypt(user.fecha_de_nacimiento) }; }
+        catch (e) { console.error(`Fallo al desencriptar datos para el usuario ${user.no_lista}:`, e); return { ...user, nombre: 'Error de datos' }; }
+    });
+    res.json(usuariosDesencriptados);
+});
+
+// ✅ GET (obtener SOLO usuarios con rol de 'Taxista') - VERSIÓN MÁS SEGURA
+app.get("/usuarios/taxistas", async (req, res) => {
+  const { data, error } = await supabase
+    .from('usuario')
+    .select('no_lista, rol, nombre, apellido_p')
+    .ilike('rol', 'taxista');
+
+  if (error) {
+    console.error("Error al obtener taxistas:", error);
+    return res.status(500).json({ error: error.message });
   }
-    
-  // 3. Desencriptamos los datos usando claves en MINÚSCULAS
-  const usuariosDesencriptados = results.map(user => {
+  
+  const taxistasDesencriptados = data.map(user => {
     try {
-      return {
-        // ...user, // No es necesario si redefinimos todos los campos
+      // ✨ AÑADIMOS VALIDACIÓN ANTES DE DESENCRIPTAR
+      // Si el campo es nulo, usamos un string vacío en su lugar.
+      const nombre = user.nombre ? decrypt(user.nombre) : '';
+      const apellido_p = user.apellido_p ? decrypt(user.apellido_p) : '';
+
+      return { 
         no_lista: user.no_lista,
         rol: user.rol,
-        nombre: decrypt(user.nombre),
-        apellido_p: decrypt(user.apellido_p), // ✨ CORREGIDO
-        apellido_m: decrypt(user.apellido_m), // ✨ CORREGIDO
-        edad: parseInt(decrypt(user.edad), 10), // ✨ CORREGIDO
-        fecha_de_nacimiento: decrypt(user.fecha_de_nacimiento) // ✨ CORREGIDO
+        nombre: nombre,
+        apellido_p: apellido_p,
       };
     } catch (e) {
-      console.error(`Fallo al desencriptar datos para el usuario ${user.no_lista}:`, e);
+      console.error(`Fallo al desencriptar datos para el taxista ${user.no_lista}:`, e);
       return { ...user, nombre: 'Error de datos' };
     }
   });
-
-  // 4. Enviamos la respuesta
-  res.json(usuariosDesencriptados);
-}); 
+  res.json(taxistasDesencriptados);
+});
 
 
-// ✅ UPDATE (actualizar usuario) - CON ENCRIPTACIÓN
+
+// ✅ READ (usuario por id) - MIGRADO Y CORREGIDO
+app.get("/usuarios/:id", async (req, res) => {
+    const { id } = req.params;
+    const { data, error } = await supabase
+      .from('usuario')
+      .select('no_lista, rol, nombre, apellido_p, apellido_m, edad, fecha_de_nacimiento')
+      .eq('no_lista', id)
+      .single(); // .single() espera un solo resultado o da error
+
+    if (error) return res.status(500).json({ error: error.message });
+    if (!data) return res.status(404).json({ message: "Usuario no encontrado" });
+    
+    try {
+      const usuarioDesencriptado = {
+        ...data,
+        nombre: decrypt(data.nombre),
+        apellido_p: decrypt(data.apellido_p),
+        apellido_m: decrypt(data.apellido_m),
+        edad: parseInt(decrypt(data.edad), 10),
+        fecha_de_nacimiento: decrypt(data.fecha_de_nacimiento)
+      };
+      res.json(usuarioDesencriptado);
+    } catch(e) {
+      console.error(`Fallo al desencriptar datos para el usuario ${id}:`, e);
+      return res.status(500).json({ message: "Error al procesar los datos del usuario." });
+    }
+});
+
+
+
+// ✅ UPDATE (actualizar usuario) - MIGRADO Y CORREGIDO
 app.put("/usuarios/:id", async (req, res) => {
   const { id } = req.params;
-  const { rol, contrasena, nombre, apellido_P, apellido_M, Edad, Fecha_de_nacimiento } = req.body;
+  const { rol, contrasena, nombre, apellido_p, apellido_m, edad, fecha_de_nacimiento } = req.body;
 
   try {
-    // Los campos a actualizar
     const updates = {
       rol,
       nombre: encrypt(nombre),
-      apellido_P: encrypt(apellido_P),
-      apellido_M: encrypt(apellido_M || ''),
-      Edad: encrypt(Edad.toString()),
-      Fecha_de_nacimiento: encrypt(Fecha_de_nacimiento)
+      apellido_p: encrypt(apellido_p),
+      apellido_m: encrypt(apellido_m || ''),
+      edad: encrypt(edad.toString()),
+      fecha_de_nacimiento: encrypt(fecha_de_nacimiento)
     };
 
-    // Si se envía una nueva contraseña, la hasheamos.
-    // Si no, la excluimos de la actualización.
     if (contrasena) {
       updates.contrasena = await bcrypt.hash(contrasena, saltRounds);
     }
 
-    const sql = `UPDATE Usuario SET ? WHERE no_lista = ?`;
+    const { data, error } = await supabase.from('usuario').update(updates).eq('no_lista', id);
     
-    db.query(sql, [updates, id], (err, result) => {
-      if (err) return res.status(500).json({ error: err.message });
-      if (result.affectedRows === 0) return res.status(404).json({ message: "Usuario no encontrado" });
-      res.json({ message: "Usuario actualizado" });
-    });
+    if (error) throw error;
+    res.json({ message: "Usuario actualizado" });
 
   } catch (error) {
     console.error("Error al actualizar usuario:", error);
@@ -214,487 +208,315 @@ app.put("/usuarios/:id", async (req, res) => {
   }
 });
 
+// ✅ DELETE (eliminar usuario) - MIGRADO
+app.delete("/usuarios/:id", async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase.from('usuario').delete().eq('no_lista', id);
 
-// 🚀 ENDPOINT PARA ELIMINAR USUARIO (DELETE)
-app.delete("/usuarios/:id", (req, res) => {
-  const { id } = req.params; // Obtenemos el ID de la URL
-  const sql = "DELETE FROM Usuario WHERE no_lista = ?";
-
-  db.query(sql, [id], (err, result) => {
-    if (err) {
-      console.error("Error al eliminar usuario:", err);
-      return res.status(500).json({ message: "Error interno del servidor." });
-    }
-    
-    // Es una buena práctica verificar si algo fue realmente eliminado
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
-    }
-    
-    // Si todo sale bien, enviamos una respuesta JSON de éxito
-    res.json({ message: "Usuario eliminado exitosamente" });
-  });
+  if (error) {
+    console.error("Error al eliminar usuario:", error);
+    return res.status(500).json({ message: "Error interno del servidor." });
+  }
+  res.json({ message: "Usuario eliminado exitosamente" });
 });
 
-
-// Tu endpoint de LOGIN y DELETE de usuario se mantienen igual, ya que no manejan directamente estos campos.
 
 // ===============================================
 // 🚀 ENDPOINTS PARA LA TABLA TAXI
 // ===============================================
-// (Tus endpoints de taxi ya están correctos, los dejo aquí por completitud)
 
-// ✅ CREATE (insertar taxi) - CON VALIDACIÓN DE ROL
-app.post("/taxis", (req, res) => {
-  const { Marca, Modelo, Año, Placa, no_lista } = req.body;
-
-  if (!Marca || !Modelo || !Año || !Placa || !no_lista) {
-    return res.status(400).json({ message: "Todos los campos son obligatorios." });
-  }
-
-  // 1. Verificar el rol del usuario primero
-  const checkRoleSql = "SELECT rol FROM usuario WHERE no_lista = ?";
-  db.query(checkRoleSql, [no_lista], (err, results) => {
-    if (err || results.length === 0 || results[0].rol !== 'Taxista') {
-      return res.status(403).json({ message: "Operación no permitida: El conductor seleccionado no es un taxista." });
-    }
-
-    // 2. Si el rol es correcto, proceder con la inserción
+// ✅ CREATE (insertar taxi) - CORREGIDO
+app.post("/taxis", async (req, res) => {
+    // ✨ Corregido de 'ano' a 'año'
+    const { marca, modelo, año, placa, no_lista } = req.body;
     try {
-      const encryptedPlaca = encrypt(Placa);
-      const sql = `INSERT INTO Taxi (Marca, Modelo, Año, Placa, no_lista) VALUES (?, ?, ?, ?, ?)`;
-      
-      db.query(sql, [Marca, Modelo, Año, encryptedPlaca, no_lista], (err, result) => {
-        if (err) {
-          console.error("Error al insertar taxi en la BD:", err);
-          return res.status(500).json({ message: "Error al guardar en la base de datos.", error: err.message });
+        const { data: user, error: userError } = await supabase.from('usuario').select('rol').eq('no_lista', no_lista).single();
+        if (userError || !user || user.rol !== 'Taxista') {
+            return res.status(403).json({ message: "Operación no permitida: El conductor no es un taxista." });
         }
-        res.status(201).json({ message: "Taxi creado exitosamente", id: result.insertId });
-      });
-    } catch (error) {
-      console.error("Error durante la encriptación de la placa:", error);
-      return res.status(500).json({ message: "Error interno del servidor." });
+        // ✨ Corregido de 'ano' a 'año'
+        const taxiData = { marca, modelo, año, placa: encrypt(placa), no_lista };
+        const { data, error } = await supabase.from('taxi').insert([taxiData]).select().single();
+        if (error) throw error;
+        res.status(201).json({ message: "Taxi creado exitosamente", id: data.economico });
+    } catch (err) {
+        console.error("Error al crear taxi:", err);
+        return res.status(500).json({ message: "Error interno del servidor.", error: err.message });
     }
-  });
 });
+// server.js
 
-// ✅ READ (todos los taxis) - VERSIÓN CORREGIDA Y ROBUSTA
-app.get("/taxis", (req, res) => {
-  // 1. Seleccionamos los campos por separado, sin CONCAT en la base de datos
-  const sql = `
-    SELECT 
-      t.economico, t.Marca, t.Modelo, t.Año, t.Placa, t.no_lista,
-      u.nombre AS nombre_conductor_enc, 
-      u.apellido_P AS apellido_conductor_enc
-    FROM Taxi t
-    LEFT JOIN Usuario u ON t.no_lista = u.no_lista
-  `;
-  
-  db.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
+// ✅ READ (todos los taxis) - CORREGIDO
+app.get("/taxis", async (req, res) => {
+    const { data, error } = await supabase
+      .from('taxi')
+      // ✨ Corregido de 'ano' a 'año'
+      .select(`economico, marca, modelo, año, placa, no_lista, usuario (nombre, apellido_p)`);
+
+    if (error) {
+      console.error("Error al obtener taxis:", error); // Imprime el error real
+      return res.status(500).json({ error: error.message });
+    }
       
-    const taxisDesencriptados = results.map(taxi => {
+    const taxisDesencriptados = data.map(taxi => {
       try {
-        // 2. Desencriptamos cada parte por separado en JavaScript
-        const nombre = decrypt(taxi.nombre_conductor_enc);
-        const apellido = decrypt(taxi.apellido_conductor_enc);
-        
+        const nombre = taxi.usuario ? decrypt(taxi.usuario.nombre) : null;
+        const apellido = taxi.usuario ? decrypt(taxi.usuario.apellido_p) : null;
         return {
-          economico: taxi.economico,
-          Marca: taxi.Marca,
-          Modelo: taxi.Modelo,
-          Año: taxi.Año,
-          Placa: decrypt(taxi.Placa),
-          no_lista: taxi.no_lista,
-          // 3. Unimos los datos ya desencriptados para mostrarlos
+          economico: taxi.economico, marca: taxi.marca, modelo: taxi.modelo, 
+          año: taxi.año, // ✨ Corregido
+          placa: decrypt(taxi.placa), no_lista: taxi.no_lista,
           nombre_conductor: (nombre && apellido) ? `${nombre} ${apellido}` : "Sin asignar"
         };
       } catch (e) {
-        console.error(`Fallo al procesar datos para el taxi ${taxi.economico}:`, e);
-        return { ...taxi, Placa: 'Error de datos', nombre_conductor: 'Error de datos' };
+        return { ...taxi, placa: 'Error de datos', nombre_conductor: 'Error de datos' };
       }
     });
-
     res.json(taxisDesencriptados);
-  });
 });
 
-// 🚀 ENDPOINT PARA ELIMINAR TAXI (DELETE)
-app.delete("/taxis/:id", (req, res) => {
-  // En este caso, el 'id' que viene de la URL es el número 'economico' del taxi
-  const { id } = req.params; 
-  const sql = "DELETE FROM Taxi WHERE economico = ?";
-
-  db.query(sql, [id], (err, result) => {
-    if (err) {
-      console.error("Error al eliminar el taxi:", err);
-      return res.status(500).json({ message: "Error interno del servidor." });
-    }
-    
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Taxi no encontrado" });
-    }
-    
+// ✅ DELETE (eliminar taxi) - MIGRADO
+app.delete("/taxis/:id", async (req, res) => {
+    const { id } = req.params;
+    const { error } = await supabase.from('taxi').delete().eq('economico', id);
+    if (error) return res.status(500).json({ message: "Error interno.", error: error.message });
     res.json({ message: "Taxi eliminado exitosamente" });
-  });
 });
 
-
-// ✅ UPDATE (actualizar taxi) - CON VALIDACIÓN DE ROL
-app.put("/taxis/:id", (req, res) => {
-  const { id } = req.params;
-  const { Marca, Modelo, Año, Placa, no_lista } = req.body;
-
-  // 1. Verificar el rol del usuario
-  const checkRoleSql = "SELECT rol FROM usuario WHERE no_lista = ?";
-  db.query(checkRoleSql, [no_lista], (err, results) => {
-    if (err || results.length === 0 || results[0].rol !== 'Taxista') {
-      return res.status(403).json({ message: "Operación no permitida: El conductor seleccionado no es un taxista." });
-    }
-
-    // 2. Si es correcto, proceder con la actualización
+// ✅ UPDATE (actualizar taxi) - CORREGIDO
+app.put("/taxis/:id", async (req, res) => {
+    const { id } = req.params;
+    // ✨ Corregido de 'ano' a 'año'
+    const { marca, modelo, año, placa, no_lista } = req.body;
     try {
-      const updates = { Marca, Modelo, Año, no_lista, Placa: encrypt(Placa) };
-      const sql = `UPDATE Taxi SET ? WHERE economico = ?`;
-      
-      db.query(sql, [updates, id], (err, result) => {
-        if (err) {
-          console.error("Error al actualizar taxi:", err);
-          return res.status(500).json({ error: err.message });
+        const { data: user, error: userError } = await supabase.from('usuario').select('rol').eq('no_lista', no_lista).single();
+        if (userError || !user || user.rol !== 'Taxista') {
+            return res.status(403).json({ message: "Operación no permitida: El conductor no es un taxista." });
         }
-        if (result.affectedRows === 0) {
-          return res.status(404).json({ message: "Taxi no encontrado" });
-        }
+        // ✨ Corregido de 'ano' a 'año'
+        const updates = { marca, modelo, año, no_lista, placa: encrypt(placa) };
+        const { error } = await supabase.from('taxi').update(updates).eq('economico', id);
+        if (error) throw error;
         res.json({ message: "Taxi actualizado exitosamente" });
-      });
-    } catch (error) {
-      console.error("Error durante el proceso de actualización del taxi:", error);
-      return res.status(500).json({ message: "Error interno del servidor." });
+    } catch (err) {
+        console.error("Error al actualizar taxi:", err);
+        return res.status(500).json({ message: "Error interno del servidor.", error: err.message });
     }
-  });
 });
-
-
 
 // ===============================================
-// 🚀 ENDPOINTS PARA LA TABLA INCIDENCIA (ACTUALIZADOS)
+// 🚀 ENDPOINTS PARA LA TABLA INCIDENCIA (CORREGIDOS)
 // ===============================================
 
-// CREATE (insertar incidencia con conductor) - CON VALIDACIÓN DE ROL
-app.post("/incidencias", (req, res) => {
-  const { descripcion, Observaciones, no_lista } = req.body;
+// ✅ CREATE (insertar incidencia con conductor)
+app.post("/incidencias", async (req, res) => {
+    // ✨ Usamos minúsculas y recibimos no_lista
+    const { descripcion, observaciones, no_lista } = req.body; 
 
-  // 1. Verificar el rol del usuario primero
-  const checkRoleSql = "SELECT rol FROM usuario WHERE no_lista = ?";
-  db.query(checkRoleSql, [no_lista], (err, results) => {
-    if (err || results.length === 0 || results[0].rol !== 'Taxista') {
-      return res.status(403).json({ message: "Operación no permitida: El usuario seleccionado no es un taxista." });
+    if (!descripcion || !no_lista) {
+        return res.status(400).json({ message: "La descripción y el conductor son obligatorios." });
     }
 
-    // 2. Si el rol es correcto, proceder con la inserción
-    const insertSql = "INSERT INTO incidencia (descripcion, Observaciones, no_lista) VALUES (?, ?, ?)";
-    db.query(insertSql, [descripcion, Observaciones, no_lista], (err, result) => {
-      if (err) {
-        console.error("Error al crear incidencia:", err);
-        return res.status(500).json({ message: "Error interno del servidor." });
-      }
-      res.status(201).json({ message: "Incidencia creada", id: result.insertId });
-    });
-  });
-});
-
-// ✅ GET (obtener SOLO usuarios con rol de 'Taxista')
-app.get("/usuarios/taxistas", (req, res) => {
-  const sql = "SELECT no_lista, rol, nombre, apellido_P FROM Usuario WHERE rol = 'Taxista'";
-  
-  db.query(sql, (err, results) => {
-    if (err) {
-      console.error("Error al obtener taxistas:", err);
-      return res.status(500).json({ error: err.message });
-    }
-    
-    // Desencriptamos los datos antes de enviarlos
-    const taxistasDesencriptados = results.map(user => {
-      try {
-        return {
-          ...user,
-          nombre: decrypt(user.nombre),
-          apellido_P: decrypt(user.apellido_P),
-        };
-      } catch (e) {
-        console.error(`Fallo al desencriptar datos para el usuario ${user.no_lista}:`, e);
-        return { ...user, nombre: 'Error de datos', apellido_P: '' };
-      }
-    });
-
-    res.json(taxistasDesencriptados);
-  });
-});
-
-// ✅ READ (usuario por id) - CON DESENCRIPTACIÓN
-app.get("/usuarios/:id", (req, res) => {
-  const { id } = req.params;
-  // Excluimos la contraseña del SELECT por seguridad
-  db.query("SELECT no_lista, rol, nombre, apellido_P, apellido_M, Edad, Fecha_de_nacimiento FROM Usuario WHERE no_lista = ?", [id], (err, result) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (result.length === 0) return res.status(404).json({ message: "Usuario no encontrado" });
-
-    const usuarioEncriptado = result[0];
-    
     try {
-      // Desencriptamos los campos para enviarlos
-      const usuarioDesencriptado = {
-        ...usuarioEncriptado,
-        nombre: decrypt(usuarioEncriptado.nombre),
-        apellido_P: decrypt(usuarioEncriptado.apellido_P),
-        apellido_M: decrypt(usuarioEncriptado.apellido_M),
-        Edad: parseInt(decrypt(usuarioEncriptado.Edad), 10),
-        Fecha_de_nacimiento: decrypt(usuarioEncriptado.Fecha_de_nacimiento)
-      };
-      res.json(usuarioDesencriptado);
+        // Verificamos que el usuario sea un taxista
+        const { data: user, error: userError } = await supabase.from('usuario').select('rol').eq('no_lista', no_lista).single();
+        if (userError || !user || user.rol !== 'Taxista') {
+            return res.status(403).json({ message: "Operación no permitida: El usuario seleccionado no es un taxista." });
+        }
+        
+        const { data, error } = await supabase.from('incidencia').insert([{ descripcion, observaciones, no_lista }]).select().single();
+        if (error) throw error;
+        res.status(201).json({ message: "Incidencia creada", id: data.id_incidencia });
 
-    } catch(e) {
-      console.error(`Fallo al desencriptar datos para el usuario ${id}:`, e);
-      return res.status(500).json({ message: "Error al procesar los datos del usuario." });
+    } catch (err) {
+        console.error("Error al crear incidencia:", err);
+        return res.status(500).json({ message: "Error interno.", error: err.message });
     }
-  });
 });
 
+// ✅ READ (todas las incidencias) - VERSIÓN CON "JOIN MANUAL" A PRUEBA DE FALLOS
+app.get("/incidencias", async (req, res) => {
+    try {
+        // --- PASO 1: Obtener todas las incidencias ---
+        const { data: incidencias, error: incidenciasError } = await supabase
+            .from('incidencia')
+            .select('*');
 
+        if (incidenciasError) throw incidenciasError;
+        if (!incidencias || incidencias.length === 0) {
+            return res.json([]); // Si no hay incidencias, devuelve un array vacío
+        }
 
-// READ (obtener todas las incidencias CON el nombre del conductor) - VERSIÓN CORREGIDA
-app.get("/incidencias", (req, res) => {
-  // 1. Seleccionamos los campos encriptados por separado, SIN CONCAT
-  const sql = `
-    SELECT 
-      i.id_incidencia,
-      i.descripcion,
-      i.Observaciones,
-      i.no_lista,
-      u.nombre AS nombre_enc,      -- Traemos el nombre encriptado
-      u.apellido_P AS apellido_enc -- Traemos el apellido encriptado
-    FROM incidencia i
-    LEFT JOIN usuario u ON i.no_lista = u.no_lista
-  `;
+        // --- PASO 2: Obtener solo los usuarios necesarios ---
+        const idsDeUsuarios = [...new Set(incidencias.map(inc => inc.no_lista).filter(id => id))];
+        
+        let usuariosMap = new Map();
+        if (idsDeUsuarios.length > 0) {
+            const { data: usuarios, error: usuariosError } = await supabase
+                .from('usuario')
+                .select('no_lista, nombre, apellido_p')
+                .in('no_lista', idsDeUsuarios);
 
-  db.query(sql, (err, results) => {
-    if (err) {
-      console.error("Error al obtener incidencias:", err);
-      return res.status(500).json({ message: "Error interno del servidor." });
+            if (usuariosError) throw usuariosError;
+            usuarios.forEach(u => usuariosMap.set(u.no_lista, u));
+        }
+
+        // --- PASO 3: Combinar los datos en JavaScript ---
+        const incidenciasCompletas = incidencias.map(inc => {
+            const usuario = usuariosMap.get(inc.no_lista);
+            let nombreConductor = 'Sin asignar';
+
+            if (usuario) {
+                try {
+                    const nombre = decrypt(usuario.nombre);
+                    const apellido = decrypt(usuario.apellido_p);
+                    nombreConductor = `${nombre} ${apellido}`;
+                } catch (e) {
+                    console.error(`Fallo al desencriptar datos para la incidencia ${inc.id_incidencia}:`, e);
+                    nombreConductor = 'Error de datos';
+                }
+            }
+
+            return {
+                id_incidencia: inc.id_incidencia,
+                descripcion: inc.descripcion,
+                observaciones: inc.observaciones,
+                no_lista: inc.no_lista,
+                nombre_conductor: nombreConductor,
+            };
+        });
+
+        res.json(incidenciasCompletas);
+
+    } catch (error) {
+        // Este console.error sí es bueno dejarlo para registrar errores reales
+        console.error("Error al obtener incidencias:", error);
+        return res.status(500).json({ error: error.message });
     }
-
-    // 2. Desencriptamos y unimos los nombres en JavaScript
-    const incidenciasDesencriptadas = results.map(inc => {
-      try {
-        const nombre = inc.nombre_enc ? decrypt(inc.nombre_enc) : null;
-        const apellido = inc.apellido_enc ? decrypt(inc.apellido_enc) : null;
-
-        return {
-          // Mantenemos los datos de la incidencia
-          id_incidencia: inc.id_incidencia,
-          descripcion: inc.descripcion,
-          Observaciones: inc.Observaciones,
-          no_lista: inc.no_lista,
-          // 3. Creamos el campo 'nombre_conductor' con los datos ya desencriptados
-          nombre_conductor: (nombre && apellido) ? `${nombre} ${apellido}` : 'Sin asignar'
-        };
-      } catch (e) {
-        console.error(`Fallo al procesar datos para la incidencia ${inc.id_incidencia}:`, e);
-        return { ...inc, nombre_conductor: 'Error de datos' };
-      }
-    });
-
-    res.json(incidenciasDesencriptadas);
-  });
 });
 
-// UPDATE (actualizar incidencia) - CON VALIDACIÓN DE ROL
-app.put("/incidencias/:id", (req, res) => {
-  const { id } = req.params;
-  const { descripcion, Observaciones, no_lista } = req.body;
-  
-  // 1. Verificar el rol
-  const checkRoleSql = "SELECT rol FROM usuario WHERE no_lista = ?";
-  db.query(checkRoleSql, [no_lista], (err, results) => {
-    if (err || results.length === 0 || results[0].rol !== 'Taxista') {
-      return res.status(403).json({ message: "Operación no permitida: El usuario seleccionado no es un taxista." });
+// ✅ UPDATE (actualizar incidencia con conductor)
+app.put("/incidencias/:id", async (req, res) => {
+    const { id } = req.params;
+    const { descripcion, observaciones, no_lista } = req.body; 
+
+    if (!descripcion || !no_lista) {
+         return res.status(400).json({ message: "La descripción y el conductor son obligatorios." });
     }
 
-    // 2. Si es correcto, actualizar
-    const updateSql = "UPDATE incidencia SET descripcion = ?, Observaciones = ?, no_lista = ? WHERE id_incidencia = ?";
-    db.query(updateSql, [descripcion, Observaciones, no_lista, id], (err, result) => {
-      if (err) {
-        console.error("Error al actualizar incidencia:", err);
-        return res.status(500).json({ message: "Error interno del servidor." });
-      }
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: "Incidencia no encontrada" });
-      }
-      res.json({ message: "Incidencia actualizada" });
-    });
-  });
+    try {
+        const { data: user, error: userError } = await supabase.from('usuario').select('rol').eq('no_lista', no_lista).single();
+        if (userError || !user || user.rol !== 'Taxista') {
+            return res.status(403).json({ message: "Operación no permitida: El usuario seleccionado no es un taxista." });
+        }
+
+        const { error } = await supabase.from('incidencia').update({ descripcion, observaciones, no_lista }).eq('id_incidencia', id);
+        if (error) throw error;
+        res.json({ message: "Incidencia actualizada" });
+
+    } catch (err) {
+         console.error("Error al actualizar incidencia:", err);
+         return res.status(500).json({ message: "Error interno.", error: err.message });
+    }
 });
 
-// DELETE (Este no necesita cambios en su lógica)
-app.delete("/incidencias/:id", (req, res) => {
-  const { id } = req.params;
-  const sql = "DELETE FROM incidencia WHERE id_incidencia = ?";
-  
-  db.query(sql, [id], (err, result) => {
-    if (err) {
-      if (err.code === 'ER_ROW_IS_REFERENCED_2') {
-        return res.status(400).json({ message: "No se puede eliminar: la incidencia está en uso en un reporte o acuerdo." });
-      }
-      console.error("Error al eliminar incidencia:", err);
-      return res.status(500).json({ message: "Error interno del servidor." });
-    }
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Incidencia no encontrada" });
+// ✅ DELETE (eliminar incidencia) - Sin cambios necesarios aquí
+app.delete("/incidencias/:id", async (req, res) => {
+    const { id } = req.params;
+    const { error } = await supabase.from('incidencia').delete().eq('id_incidencia', id);
+    if (error) {
+        if (error.code === '23503') {
+            return res.status(400).json({ message: "No se puede eliminar: la incidencia está en uso." });
+        }
+        return res.status(500).json({ message: "Error interno.", error: error.message });
     }
     res.json({ message: "Incidencia eliminada exitosamente" });
-  });
 });
-
-
 // ===============================================
 // 🚀 ENDPOINTS PARA LA TABLA ACUERDO
 // ===============================================
 
-// CREATE (insertar acuerdo)
-app.post("/acuerdos", (req, res) => {
-  const { Descripcion, id_incidencia } = req.body;
-  const sql = "INSERT INTO acuerdo (Descripcion, id_incidencia) VALUES (?, ?)";
-  
-  db.query(sql, [Descripcion, id_incidencia], (err, result) => {
-    if (err) {
-      console.error("Error al crear acuerdo:", err);
-      return res.status(500).json({ message: "Error interno del servidor." });
-    }
-    res.status(201).json({ message: "Acuerdo creado", id: result.insertId });
-  });
+// ✅ CREATE (insertar acuerdo) - MIGRADO
+app.post("/acuerdos", async (req, res) => {
+    const { descripcion, id_incidencia } = req.body;
+    const { data, error } = await supabase.from('acuerdo').insert([{ descripcion, id_incidencia }]).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.status(201).json({ message: "Acuerdo creado", id: data.id_acuerdo });
 });
 
-// READ (obtener todos los acuerdos CON la descripción de la incidencia)
-app.get("/acuerdos", (req, res) => {
-  const sql = `
-    SELECT 
-      a.id_acuerdo,
-      a.Descripcion,
-      a.id_incidencia,
-      i.descripcion AS incidencia_descripcion
-    FROM acuerdo a
-    LEFT JOIN incidencia i ON a.id_incidencia = i.id_incidencia
-  `;
-  db.query(sql, (err, results) => {
-    if (err) {
-      console.error("Error al obtener acuerdos:", err);
-      return res.status(500).json({ message: "Error interno del servidor." });
-    }
-    res.json(results);
-  });
+// ✅ READ (todos los acuerdos) - MIGRADO
+app.get("/acuerdos", async (req, res) => {
+    const { data, error } = await supabase.from('acuerdo').select('*, incidencia(descripcion)');
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
 });
 
-// UPDATE (actualizar acuerdo)
-app.put("/acuerdos/:id", (req, res) => {
-  const { id } = req.params;
-  const { Descripcion, id_incidencia } = req.body;
-  const sql = "UPDATE acuerdo SET Descripcion = ?, id_incidencia = ? WHERE id_acuerdo = ?";
-
-  db.query(sql, [Descripcion, id_incidencia, id], (err, result) => {
-    if (err) {
-      console.error("Error al actualizar acuerdo:", err);
-      return res.status(500).json({ message: "Error interno del servidor." });
-    }
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Acuerdo no encontrado" });
-    }
+// ✅ UPDATE (actualizar acuerdo) - MIGRADO
+app.put("/acuerdos/:id", async (req, res) => {
+    const { id } = req.params;
+    const { descripcion, id_incidencia } = req.body;
+    const { error } = await supabase.from('acuerdo').update({ descripcion, id_incidencia }).eq('id_acuerdo', id);
+    if (error) return res.status(500).json({ error: error.message });
     res.json({ message: "Acuerdo actualizado" });
-  });
 });
 
-// DELETE (eliminar acuerdo)
-app.delete("/acuerdos/:id", (req, res) => {
-  const { id } = req.params;
-  const sql = "DELETE FROM acuerdo WHERE id_acuerdo = ?";
-  
-  db.query(sql, [id], (err, result) => {
-    if (err) {
-      // Manejar error si el acuerdo está en uso en un reporte
-      if (err.code === 'ER_ROW_IS_REFERENCED_2') {
-        return res.status(400).json({ message: "No se puede eliminar: el acuerdo está en uso en un reporte." });
-      }
-      console.error("Error al eliminar acuerdo:", err);
-      return res.status(500).json({ message: "Error interno del servidor." });
-    }
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Acuerdo no encontrado" });
+// ✅ DELETE (eliminar acuerdo) - MIGRADO Y CORREGIDO
+app.delete("/acuerdos/:id", async (req, res) => {
+    const { id } = req.params;
+    const { error } = await supabase.from('acuerdo').delete().eq('id_acuerdo', id);
+    if (error) {
+        if (error.code === '23503') {
+            return res.status(400).json({ message: "No se puede eliminar: el acuerdo está en uso en un reporte." });
+        }
+        return res.status(500).json({ message: "Error interno.", error: error.message });
     }
     res.json({ message: "Acuerdo eliminado exitosamente" });
-  });
 });
+
 
 // ===============================================
 // 🚀 ENDPOINTS PARA LA TABLA REPORTE
 // ===============================================
 
-// CREATE (insertar reporte)
-app.post("/reportes", (req, res) => {
-  // El campo 'nombre' en la tabla parece ser para el nombre del reportante, no lo usaremos si tenemos el no_lista.
-  const { no_lista, economico, Fecha_Reporte, Observaciones, id_incidencia, id_acuerdo } = req.body;
-  const sql = `
-    INSERT INTO reporte (no_lista, economico, Fecha_Reporte, Observaciones, id_incidencia, id_acuerdo) 
-    VALUES (?, ?, ?, ?, ?, ?)
-  `;
-  
-  db.query(sql, [no_lista, economico, Fecha_Reporte, Observaciones, id_incidencia, id_acuerdo], (err, result) => {
-    if (err) {
-      console.error("Error al crear reporte:", err);
-      return res.status(500).json({ message: "Error interno del servidor." });
-    }
-    res.status(201).json({ message: "Reporte creado", id: result.insertId });
-  });
+// ✅ CREATE (insertar reporte) - MIGRADO
+app.post("/reportes", async (req, res) => {
+    const { no_lista, economico, fecha_reporte, observaciones, id_incidencia, id_acuerdo } = req.body;
+    const { data, error } = await supabase.from('reporte').insert([{ no_lista, economico, fecha_reporte, observaciones, id_incidencia, id_acuerdo }]).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.status(201).json({ message: "Reporte creado", id: data.id_reporte });
 });
 
-// READ (obtener todos los reportes con toda la información relacionada)
-app.get("/reportes", (req, res) => {
-  const sql = `
-    SELECT 
-      r.id_reporte,
-      r.Fecha_Reporte,
-      r.Observaciones,
-      r.no_lista,
-      r.economico,
-      r.id_incidencia,
-      r.id_acuerdo,
-      u.nombre AS nombre_conductor_enc,
-      u.apellido_P AS apellido_conductor_enc,
-      t.Placa AS placa_taxi_enc,
-      i.descripcion AS incidencia_descripcion,
-      ac.Descripcion AS acuerdo_descripcion
-    FROM reporte r
-    LEFT JOIN usuario u ON r.no_lista = u.no_lista
-    LEFT JOIN taxi t ON r.economico = t.economico
-    LEFT JOIN incidencia i ON r.id_incidencia = i.id_incidencia
-    LEFT JOIN acuerdo ac ON r.id_acuerdo = ac.id_acuerdo
-    ORDER BY r.Fecha_Reporte DESC
-  `;
-
-  db.query(sql, (err, results) => {
-    if (err) {
-      console.error("Error al obtener reportes:", err);
-      return res.status(500).json({ message: "Error interno del servidor." });
+app.get("/reportes", async (req, res) => {
+    // Usamos la sintaxis explícita para asegurar que los joins funcionen
+    const { data, error } = await supabase.from('reporte')
+      .select(`*, 
+               usuario!no_lista(nombre, apellido_p), 
+               taxi!economico(placa), 
+               incidencia!id_incidencia(descripcion), 
+               acuerdo!id_acuerdo(descripcion)`);
+      
+    if (error) {
+        console.error("Error al obtener reportes:", error);
+        return res.status(500).json({ error: error.message });
     }
 
-    // Desencriptamos los campos necesarios en JavaScript
-    const reportesDesencriptados = results.map(rep => {
+    const reportesDesencriptados = data.map(rep => {
       try {
-        const nombre = rep.nombre_conductor_enc ? decrypt(rep.nombre_conductor_enc) : null;
-        const apellido = rep.apellido_conductor_enc ? decrypt(rep.apellido_conductor_enc) : null;
+        const nombre = rep.usuario ? decrypt(rep.usuario.nombre) : null;
+        const apellido = rep.usuario ? decrypt(rep.usuario.apellido_p) : null;
         
         return {
-          ...rep,
+          id_reporte: rep.id_reporte,
+          fecha_reporte: rep.fecha_reporte,
+          observaciones: rep.observaciones,
+          no_lista: rep.no_lista,
+          economico: rep.economico,
+          id_incidencia: rep.id_incidencia,
+          id_acuerdo: rep.id_acuerdo,
           nombre_conductor: (nombre && apellido) ? `${nombre} ${apellido}` : "N/A",
-          placa_taxi: rep.placa_taxi_enc ? decrypt(rep.placa_taxi_enc) : "N/A"
+          placa_taxi: rep.taxi ? decrypt(rep.taxi.placa) : "N/A",
+          incidencia_descripcion: rep.incidencia ? rep.incidencia.descripcion : "N/A",
+          acuerdo_descripcion: rep.acuerdo ? rep.acuerdo.descripcion : "N/A"
         };
       } catch (e) {
         console.error(`Fallo al procesar datos para el reporte ${rep.id_reporte}:`, e);
@@ -703,110 +525,108 @@ app.get("/reportes", (req, res) => {
     });
 
     res.json(reportesDesencriptados);
-  });
 });
 
-// UPDATE (actualizar reporte)
-app.put("/reportes/:id", (req, res) => {
-  const { id } = req.params;
-  const { no_lista, economico, Fecha_Reporte, Observaciones, id_incidencia, id_acuerdo } = req.body;
-  const sql = `
-    UPDATE reporte SET no_lista = ?, economico = ?, Fecha_Reporte = ?, 
-    Observaciones = ?, id_incidencia = ?, id_acuerdo = ? 
-    WHERE id_reporte = ?
-  `;
-
-  db.query(sql, [no_lista, economico, Fecha_Reporte, Observaciones, id_incidencia, id_acuerdo, id], (err, result) => {
-    if (err) {
-      console.error("Error al actualizar reporte:", err);
-      return res.status(500).json({ message: "Error interno del servidor." });
-    }
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Reporte no encontrado" });
-    }
+// ✅ UPDATE (actualizar reporte) - MIGRADO
+app.put("/reportes/:id", async (req, res) => {
+    const { id } = req.params;
+    const { no_lista, economico, fecha_reporte, observaciones, id_incidencia, id_acuerdo } = req.body;
+    const { error } = await supabase.from('reporte').update({ no_lista, economico, fecha_reporte, observaciones, id_incidencia, id_acuerdo }).eq('id_reporte', id);
+    if (error) return res.status(500).json({ error: error.message });
     res.json({ message: "Reporte actualizado" });
-  });
 });
 
-// DELETE (eliminar reporte)
-app.delete("/reportes/:id", (req, res) => {
-  const { id } = req.params;
-  const sql = "DELETE FROM reporte WHERE id_reporte = ?";
-  
-  db.query(sql, [id], (err, result) => {
-    if (err) {
-      console.error("Error al eliminar reporte:", err);
-      return res.status(500).json({ message: "Error interno del servidor." });
-    }
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Reporte no encontrado" });
-    }
+// ✅ DELETE (eliminar reporte) - MIGRADO
+app.delete("/reportes/:id", async (req, res) => {
+    const { id } = req.params;
+    const { error } = await supabase.from('reporte').delete().eq('id_reporte', id);
+    if (error) return res.status(500).json({ error: error.message });
     res.json({ message: "Reporte eliminado exitosamente" });
-  });
 });
 
+
 // ===============================================
-// 🚀 ENDPOINTS ESPECIALIZADOS PARA TAXISTAS
+// 🚀 ENDPOINTS ESPECIALIZADOS PARA TAXISTAS (CORREGIDOS)
 // ===============================================
 
-// GET (obtener reportes SOLO de un taxista específico)
-app.get("/reportes/taxista/:id", (req, res) => {
-  const taxistaId = req.params.id;
-  const sql = `
-    SELECT 
-      r.id_reporte, r.Fecha_Reporte, r.Observaciones,
-      t.Placa AS placa_taxi_enc,
-      i.descripcion AS incidencia_descripcion
-    FROM reporte r
-    LEFT JOIN taxi t ON r.economico = t.economico
-    LEFT JOIN incidencia i ON r.id_incidencia = i.id_incidencia
-    WHERE r.no_lista = ?  -- <-- El filtro clave
-    ORDER BY r.Fecha_Reporte DESC
-  `;
-
-  db.query(sql, [taxistaId], (err, results) => {
-    if (err) {
-      console.error("Error al obtener reportes del taxista:", err);
-      return res.status(500).json({ message: "Error interno del servidor." });
+// ✅ GET (reportes de un taxista) - CON JOIN EXPLÍCITO Y MINÚSCULAS
+app.get("/reportes/taxista/:id", async (req, res) => {
+    const taxistaId = req.params.id;
+    const { data, error } = await supabase.from('reporte')
+      // ✨ Usamos JOIN explícito y minúsculas
+      .select(`id_reporte, fecha_reporte, observaciones, 
+               taxi!economico(placa), 
+               incidencia!id_incidencia(descripcion)`)
+      .eq('no_lista', taxistaId);
+      
+    if (error) {
+        console.error("Error al obtener reportes del taxista:", error);
+        return res.status(500).json({ error: error.message });
     }
-    // Desencriptamos la placa
-    const reportesDesencriptados = results.map(rep => ({
-      ...rep,
-      placa_taxi: rep.placa_taxi_enc ? decrypt(rep.placa_taxi_enc) : "N/A"
-    }));
+
+    const reportesDesencriptados = data.map(rep => {
+        try {
+            return {
+                id_reporte: rep.id_reporte,
+                fecha_reporte: rep.fecha_reporte,
+                observaciones: rep.observaciones, // ✨ Minúscula
+                // ✨ Usamos minúscula y validamos que 'taxi' exista
+                placa_taxi: rep.taxi ? decrypt(rep.taxi.placa) : "N/A", 
+                // ✨ Usamos minúscula y validamos que 'incidencia' exista
+                incidencia_descripcion: rep.incidencia ? rep.incidencia.descripcion : "N/A" 
+            };
+        } catch (e) {
+            console.error(`Fallo al desencriptar placa para reporte ${rep.id_reporte}:`, e);
+            return { ...rep, placa_taxi: 'Error de datos' };
+        }
+    });
     res.json(reportesDesencriptados);
-  });
 });
 
-// GET (obtener acuerdos de los reportes de un taxista específico)
-app.get("/acuerdos/taxista/:id", (req, res) => {
-  const taxistaId = req.params.id;
-  const sql = `
-    SELECT 
-      ac.id_acuerdo, ac.Descripcion,
-      r.id_reporte,
-      i.descripcion AS incidencia_descripcion
-    FROM acuerdo ac
-    INNER JOIN reporte r ON ac.id_acuerdo = r.id_acuerdo
-    INNER JOIN incidencia i ON ac.id_incidencia = i.id_incidencia
-    WHERE r.no_lista = ? -- <-- Filtramos por el taxista que hizo el reporte
-  `;
+// ✅ GET (acuerdos de un taxista) - CON JOIN EXPLÍCITO Y MINÚSCULAS
+app.get("/acuerdos/taxista/:id", async (req, res) => {
+    const taxistaId = req.params.id;
+    try {
+        // 1. Obtener los reportes del taxista que tengan un acuerdo asociado
+        const { data: reportes, error: reportesError } = await supabase
+            .from('reporte')
+            .select('id_acuerdo')
+            .eq('no_lista', taxistaId)
+            .not('id_acuerdo', 'is', null); // Solo reportes con acuerdo
 
-  db.query(sql, [taxistaId], (err, results) => {
-    if (err) {
-      console.error("Error al obtener acuerdos del taxista:", err);
-      return res.status(500).json({ message: "Error interno del servidor." });
+        if (reportesError) throw reportesError;
+        if (!reportes || reportes.length === 0) return res.json([]); // Si no hay, devuelve array vacío
+
+        // 2. Obtener los acuerdos correspondientes usando JOIN explícito
+        const acuerdoIds = reportes.map(r => r.id_acuerdo);
+        const { data: acuerdos, error: acuerdosError } = await supabase
+            .from('acuerdo')
+             // ✨ Usamos JOIN explícito y minúsculas
+            .select('*, incidencia!id_incidencia(descripcion)') 
+            .in('id_acuerdo', acuerdoIds);
+
+        if (acuerdosError) throw acuerdosError;
+        
+        // ✨ Devolvemos los datos con la clave en minúscula
+        const acuerdosFinales = acuerdos.map(ac => ({
+            id_acuerdo: ac.id_acuerdo,
+            descripcion: ac.descripcion, // ✨ Minúscula
+            id_incidencia: ac.id_incidencia,
+             // ✨ Usamos minúscula y validamos que 'incidencia' exista
+            incidencia_descripcion: ac.incidencia ? ac.incidencia.descripcion : "N/A" 
+        }));
+
+        res.json(acuerdosFinales);
+
+    } catch (error) {
+         console.error("Error al obtener acuerdos del taxista:", error);
+         return res.status(500).json({ error: error.message });
     }
-    res.json(results);
-  });
 });
 
-
-
-// Servidor
+// ===============================================
+// 🚀 SERVIDOR
+// ===============================================
 app.listen(3000, () => {
   console.log("Servidor backend corriendo en http://localhost:3000");
 });
-
-
-

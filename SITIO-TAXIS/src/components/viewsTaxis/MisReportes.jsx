@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../secure/AuthContext';
-import TaxistaNavbar from '../Nabvars/TaxistaNavbar'; // Ajusta la ruta si es necesario
-import IndexFooter from '../Footers/IndexFooter'; // Ajusta la ruta si es necesario
+import TaxistaNavbar from '../Nabvars/TaxistaNavbar';
+import IndexFooter from '../Footers/IndexFooter';
 
 function MisReportes() {
   const [reportes, setReportes] = useState([]);
-  const { user } = useAuth(); // Obtenemos el usuario logueado
+  const { user } = useAuth();
 
   useEffect(() => {
     if (user?.no_lista) {
-      // Solo hacemos la petición si tenemos el ID del usuario
       fetch(`http://localhost:3000/reportes/taxista/${user.no_lista}`)
         .then(res => res.json())
         .then(data => setReportes(data))
         .catch(err => console.error("Error al cargar mis reportes:", err));
     }
-  }, [user]); // El efecto se ejecuta cuando el usuario se carga
+  }, [user]);
 
   return (
     <div>
@@ -35,13 +34,14 @@ function MisReportes() {
             </thead>
             <tbody>
               {reportes.length > 0 ? (
+                // ✅ CORREGIDO: Propiedades en minúsculas
                 reportes.map((rep) => (
                   <tr key={rep.id_reporte}>
                     <td>{rep.id_reporte}</td>
-                    <td>{new Date(rep.Fecha_Reporte).toLocaleDateString()}</td>
+                    <td>{rep.fecha_reporte ? new Date(rep.fecha_reporte).toLocaleDateString() : 'N/A'}</td>
                     <td>{rep.placa_taxi}</td>
                     <td>{rep.incidencia_descripcion}</td>
-                    <td>{rep.Observaciones || 'N/A'}</td>
+                    <td>{rep.observaciones || 'N/A'}</td>
                   </tr>
                 ))
               ) : (

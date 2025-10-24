@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../secure/AuthContext';
 import TaxistaNavbar from '../Nabvars/TaxistaNavbar';
-import IndexFooter from '../Footers/IndexFooter'; // Ajusta la ruta
+import IndexFooter from '../Footers/IndexFooter';
 
 function MisAcuerdos() {
   const [acuerdos, setAcuerdos] = useState([]);
@@ -26,24 +26,23 @@ function MisAcuerdos() {
             <thead className="table-dark">
               <tr>
                 <th>ID Acuerdo</th>
-                <th>Reporte Asociado</th>
                 <th>Incidencia</th>
                 <th>Descripción del Acuerdo</th>
               </tr>
             </thead>
             <tbody>
               {acuerdos.length > 0 ? (
+                // ✅ CORREGIDO: Propiedades en minúsculas
                 acuerdos.map((ac) => (
                   <tr key={ac.id_acuerdo}>
                     <td>{ac.id_acuerdo}</td>
-                    <td>Reporte #{ac.id_reporte}</td>
                     <td>{ac.incidencia_descripcion}</td>
-                    <td>{ac.Descripcion}</td>
+                    <td>{ac.descripcion}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="text-center">No hay acuerdos asociados a tus reportes.</td>
+                  <td colSpan="3" className="text-center">No hay acuerdos asociados a tus reportes.</td>
                 </tr>
               )}
             </tbody>

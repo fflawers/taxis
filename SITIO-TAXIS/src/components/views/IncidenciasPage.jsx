@@ -4,14 +4,13 @@ import IndexFooter from "../Footers/IndexFooter";
 
 function IncidenciasPage() {
   const [incidencias, setIncidencias] = useState([]);
-  const [usuarios, setUsuarios] = useState([]); // <-- NUEVO: Para la lista de conductores
-  const [form, setForm] = useState({ descripcion: "", Observaciones: "", no_lista: "" }); // <-- Se añade no_lista
+  const [usuarios, setUsuarios] = useState([]);
 
-  // Estados para el modal de edición
+  // ✅ CORREGIDO: Estado inicial con minúsculas
+  const [form, setForm] = useState({ descripcion: "", observaciones: "", no_lista: "" });
+
   const [incidenciaAEditar, setIncidenciaAEditar] = useState(null);
   const [formEdicion, setFormEdicion] = useState(null);
-
-  // --- FUNCIONES CRUD ---
 
   const fetchIncidencias = async () => {
     try {
@@ -25,8 +24,7 @@ function IncidenciasPage() {
 
   const fetchUsuarios = async () => {
     try {
-      // APUNTAMOS AL NUEVO ENDPOINT
-      const res = await fetch("http://localhost:3000/usuarios/taxistas"); 
+      const res = await fetch("http://localhost:3000/usuarios/taxistas");
       const data = await res.json();
       setUsuarios(data);
     } catch (error) {
@@ -36,7 +34,7 @@ function IncidenciasPage() {
 
   useEffect(() => {
     fetchIncidencias();
-    fetchUsuarios(); // ✅ Se llama a la nueva función
+    fetchUsuarios();
   }, []);
 
   const handleChange = (e) => {
@@ -45,40 +43,48 @@ function IncidenciasPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.no_lista) { // <-- Validación
+    if (!form.no_lista) {
       alert("Por favor, selecciona un conductor.");
       return;
     }
     try {
-      await fetch("http://localhost:3000/incidencias", {
+      const res = await fetch("http://localhost:3000/incidencias", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      setForm({ descripcion: "", Observaciones: "", no_lista: "" }); // <-- Se resetea no_lista
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || 'Error al crear incidencia');
+      }
+      setForm({ descripcion: "", observaciones: "", no_lista: "" });
       fetchIncidencias();
     } catch (error) {
       console.error("Error al crear incidencia:", error);
+      alert(error.message);
     }
   };
 
   const handleDelete = async (id) => {
-      try {
-        const res = await fetch(`http://localhost:3000/incidencias/${id}`, { method: "DELETE" });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message);
-        fetchIncidencias();
-      } catch (error) {
-        console.error("Error al eliminar incidencia:", error);
-        alert(`Error: ${error.message}`);
+    try {
+      const res = await fetch(`http://localhost:3000/incidencias/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      fetchIncidencias();
+    } catch (error) {
+      console.error("Error al eliminar incidencia:", error);
+      alert(`Error: ${error.message}`);
     }
   };
 
-  // --- FUNCIONES PARA EDITAR ---
-
+  // ✅ CORREGIDO: Previene error de input no controlado
   const handleEditClick = (incidencia) => {
     setIncidenciaAEditar(incidencia);
-    setFormEdicion({ ...incidencia });
+    setFormEdicion({
+      descripcion: incidencia.descripcion || '',
+      observaciones: incidencia.observaciones || '', // Corregido
+      no_lista: incidencia.no_lista || ''
+    });
   };
 
   const handleEditChange = (e) => {
@@ -88,16 +94,25 @@ function IncidenciasPage() {
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
     const id = incidenciaAEditar.id_incidencia;
+    if (!formEdicion.no_lista) {
+        alert("Por favor, selecciona un conductor.");
+        return;
+    }
     try {
-      await fetch(`http://localhost:3000/incidencias/${id}`, {
+      const res = await fetch(`http://localhost:3000/incidencias/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formEdicion),
       });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || 'Error al actualizar incidencia');
+      }
       setIncidenciaAEditar(null);
       fetchIncidencias();
     } catch (error) {
       console.error("Error al actualizar incidencia:", error);
+      alert(error.message);
     }
   };
 
@@ -106,68 +121,52 @@ function IncidenciasPage() {
       <Navbar />
       <div className="container mt-4">
         <h1 className="text-center fw-bold">Gestión de Incidencias</h1>
-
-        {/* Formulario para agregar con selector de conductor */}
         <div className="card p-3 my-4">
-            <h2 className="fw-bold">Agregar Nueva Incidencia</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="row g-3 align-items-end">
-                    <div className="col-md-4">
-                        <label className="form-label">Descripción</label>
-                        <input
-                            type="text" name="descripcion" placeholder="Ej. Falla mecánica"
-                            value={form.descripcion} onChange={handleChange}
-                            className="form-control" required />
-                    </div>
-                    <div className="col-md-3">
-                        <label className="form-label">Observaciones</label>
-                        <input
-                            type="text" name="Observaciones" placeholder="(Opcional)"
-                            value={form.Observaciones} onChange={handleChange}
-                            className="form-control" />
-                    </div>
-                    {/* ✅ NUEVO SELECTOR DE CONDUCTOR */}
-                    <div className="col-md-3">
-                        <label className="form-label">Conductor que reporta</label>
-                        <select name="no_lista" value={form.no_lista} onChange={handleChange} className="form-select" required>
-                            <option value="">-- Seleccionar --</option>
-                            {usuarios.map((u) => (
-                                <option key={u.no_lista} value={u.no_lista}>
-                                    {u.nombre} {u.apellido_P}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="col-md-2">
-                        <button type="submit" className="btn btn-primary w-100">
-                            Agregar
-                        </button>
-                    </div>
-                </div>
-            </form>
+          <h2 className="fw-bold">Agregar Nueva Incidencia</h2>
+          {/* ✅ CORREGIDO: Atributo 'name' en minúsculas */}
+          <form onSubmit={handleSubmit}>
+            <div className="row g-3 align-items-end">
+              <div className="col-md-4">
+                <label className="form-label">Descripción</label>
+                <input type="text" name="descripcion" placeholder="Ej. Falla mecánica" value={form.descripcion} onChange={handleChange} className="form-control" required />
+              </div>
+              <div className="col-md-3">
+                <label className="form-label">Observaciones</label>
+                <input type="text" name="observaciones" placeholder="(Opcional)" value={form.observaciones} onChange={handleChange} className="form-control" />
+              </div>
+              <div className="col-md-3">
+                <label className="form-label">Conductor que reporta</label>
+                <select name="no_lista" value={form.no_lista} onChange={handleChange} className="form-select" required>
+                  <option value="">-- Seleccionar --</option>
+                  {/* ✅ CORREGIDO: Muestra datos con claves minúsculas */}
+                  {usuarios.map((u) => (
+                    <option key={u.no_lista} value={u.no_lista}>{u.nombre} {u.apellido_p}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-2">
+                <button type="submit" className="btn btn-primary w-100">Agregar</button>
+              </div>
+            </div>
+          </form>
         </div>
 
-        {/* Tabla de incidencias con columna de conductor */}
         <h2 className="fw-bold">Incidencias Registradas</h2>
         <div className="table-responsive">
           <table className="table table-striped table-hover">
             <thead className="table-dark">
               <tr>
-                <th>ID</th>
-                <th>Descripción</th>
-                <th>Conductor</th> {/* ✅ NUEVA COLUMNA */}
-                <th>Observaciones</th>
-                <th>Acciones</th>
+                <th>ID</th><th>Descripción</th><th>Conductor</th><th>Observaciones</th><th>Acciones</th>
               </tr>
             </thead>
             <tbody>
+              {/* ✅ CORREGIDO: Muestra datos con claves minúsculas */}
               {incidencias.map((inc) => (
                 <tr key={inc.id_incidencia}>
                   <td>{inc.id_incidencia}</td>
                   <td>{inc.descripcion}</td>
-                  {/* ✅ Se muestra el nombre del conductor */}
                   <td>{inc.nombre_conductor || <span className="text-muted">No asignado</span>}</td>
-                  <td>{inc.Observaciones}</td>
+                  <td>{inc.observaciones}</td>
                   <td>
                     <button className="btn btn-sm btn-info me-2" onClick={() => handleEditClick(inc)}>Editar</button>
                     <button className="btn btn-sm btn-danger" onClick={() => handleDelete(inc.id_incidencia)}>Eliminar</button>
@@ -179,8 +178,8 @@ function IncidenciasPage() {
         </div>
       </div>
 
-      {/* Modal de edición con selector de conductor */}
-      {incidenciaAEditar && (
+      {/* ✅ CORREGIDO: Modal con 'name' y 'value' en minúsculas */}
+      {incidenciaAEditar && formEdicion && (
         <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
@@ -194,21 +193,18 @@ function IncidenciasPage() {
                     <label className="form-label">Descripción</label>
                     <input type="text" name="descripcion" value={formEdicion.descripcion} onChange={handleEditChange} className="form-control" required />
                   </div>
-                   {/* ✅ NUEVO SELECTOR EN EL MODAL */}
                   <div className="mb-3">
                     <label className="form-label">Conductor</label>
                     <select name="no_lista" value={formEdicion.no_lista} onChange={handleEditChange} className="form-select" required>
-                        <option value="">-- Reasignar --</option>
-                        {usuarios.map((u) => (
-                            <option key={u.no_lista} value={u.no_lista}>
-                                {u.nombre} {u.apellido_P}
-                            </option>
-                        ))}
+                      <option value="">-- Reasignar --</option>
+                      {usuarios.map((u) => (
+                        <option key={u.no_lista} value={u.no_lista}>{u.nombre} {u.apellido_p}</option>
+                      ))}
                     </select>
                   </div>
                   <div className="mb-3">
                     <label className="form-label">Observaciones</label>
-                    <input type="text" name="Observaciones" value={formEdicion.Observaciones} onChange={handleEditChange} className="form-control"/>
+                    <input type="text" name="observaciones" value={formEdicion.observaciones} onChange={handleEditChange} className="form-control"/>
                   </div>
                 </div>
                 <div className="modal-footer">
@@ -220,7 +216,6 @@ function IncidenciasPage() {
           </div>
         </div>
       )}
-
       <IndexFooter />
     </div>
   );
