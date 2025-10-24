@@ -1,7 +1,7 @@
 import express from "express";
-import mysql from "mysql2";
 import cors from "cors";
 import bcrypt from "bcrypt";
+import { supabase } from "./supabaseClient.js";
 // Asegúrate que la ruta sea correcta
 import { encrypt, decrypt } from './crypto-utils.js';
 
@@ -9,79 +9,59 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Conexión a tu base de datos
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "Trol334455.", // Tu contraseña
-  database: "EJEMPLO1"
-});
+
 
 // ===============================================
 // 🚀 ENDPOINT PARA INICIO DE SESIÓN (LOGIN)
 // ===============================================
 
-// ENDPOINT PARA INICIO DE SESIÓN (LOGIN) - MODIFICADO
-// Asegúrate de que tu endpoint de login NO esté duplicado en el archivo.
-// Busca el app.post("/login", ...) y reemplázalo con este.
-
-app.post("/login", (req, res) => {
+// ✅ ENDPOINT PARA INICIO DE SESIÓN (LOGIN) - CON SUPABASE
+app.post("/login", async (req, res) => {
   const { no_lista, contrasena } = req.body;
 
-  const sql = `
-    SELECT no_lista, rol, nombre, apellido_P, contrasena 
-    FROM Usuario 
-    WHERE no_lista = ?
-  `;
+  // 1. Buscamos al usuario por su 'no_lista'
+  const { data: results, error: dbError } = await supabase
+    .from('usuario')
+    .select('no_lista, rol, nombre, apellido_p, contrasena')
+    .eq('no_lista', no_lista); // .eq() es como hacer "WHERE no_lista = ?"
 
-  db.query(sql, [no_lista], async (err, results) => {
-    if (err) {
-      console.error("Error de base de datos durante el login:", err);
-      return res.status(500).json({ message: "Error interno del servidor." });
-    }
+  if (dbError) {
+    console.error("Error de base de datos durante el login:", dbError);
+    return res.status(500).json({ message: "Error interno del servidor." });
+  }
 
-    if (results.length === 0) {
+  if (!results || results.length === 0) {
+    return res.status(401).json({ message: "Usuario o Contraseña incorrectos." });
+  }
+
+  const usuario = results[0];
+  const hashedPasswordFromDB = usuario.contrasena;
+
+  try {
+    // 2. Comparamos la contraseña (esta lógica no cambia)
+    const match = await bcrypt.compare(contrasena, hashedPasswordFromDB);
+
+    if (match) {
+      // 3. Desencriptamos los datos del usuario (esta lógica no cambia)
+      const usuarioDesencriptado = {
+        no_lista: usuario.no_lista,
+        rol: usuario.rol,
+        nombre: decrypt(usuario.nombre),
+        apellido_P: decrypt(usuario.apellido_P)
+      };
+
+      return res.json({
+        message: "Inicio de sesión exitoso",
+        usuario: usuarioDesencriptado,
+        rol: usuarioDesencriptado.rol
+      });
+    } else {
       return res.status(401).json({ message: "Usuario o Contraseña incorrectos." });
     }
-
-    const usuario = results[0];
-    const hashedPasswordFromDB = usuario.contrasena;
-
-    try {
-      // ✅ --- AÑADE ESTAS LÍNEAS PARA DEPURAR ---
-      console.log("1. Password from frontend:", contrasena);
-      console.log("2. Hashed password from DB:", hashedPasswordFromDB);
-      // ---------------------------------------------
-
-      const match = await bcrypt.compare(contrasena, hashedPasswordFromDB);
-
-      if (match) {
-        // ... el resto de tu código para desencriptar y responder ...
-        try {
-          const usuarioDesencriptado = {
-            no_lista: usuario.no_lista,
-            rol: usuario.rol,
-            nombre: decrypt(usuario.nombre),
-            apellido_P: decrypt(usuario.apellido_P)
-          };
-
-          return res.json({
-            message: "Inicio de sesión exitoso",
-            usuario: usuarioDesencriptado,
-            rol: usuarioDesencriptado.rol
-          });
-        } catch (decryptError) {
-          console.error("Error al desencriptar datos durante el login:", decryptError);
-          return res.status(500).json({ message: "Error al procesar datos del usuario." });
-        }
-      } else {
-        return res.status(401).json({ message: "Usuario o Contraseña incorrectos." });
-      }
-    } catch (error) {
-      console.error("Error al comparar contraseñas:", error);
-      return res.status(500).json({ message: "Error interno del servidor." });
-    }
-  });
+  } catch (error) {
+    console.error("Error al procesar login:", error);
+    return res.status(500).json({ message: "Error interno del servidor." });
+  }
 });
 // // UPDATE para hashear la contraseña si se cambia.
 // app.put("/usuarios/:id", async (req, res) => {
@@ -117,76 +97,85 @@ const saltRounds = 10;
 // 🚀 ENDPOINTS PARA LA TABLA USUARIO (MODIFICADOS)
 // ===============================================
 
-// ✅ CREATE (insertar usuario) - CON ENCRIPTACIÓN
+// ✅ CREATE (insertar usuario) - VERSIÓN FINAL CORREGIDA
 app.post("/usuarios", async (req, res) => {
-
-  // Vamos a extraer la contraseña de forma directa para evitar cualquier problema
-  const contrasenaParaHashear = req.body.contrasena;
-  const { rol, nombre, apellido_P, apellido_M, Edad, Fecha_de_nacimiento } = req.body;
+  const saltRounds = 10;
+  // 1. Extraemos las propiedades del body, AHORA TODAS EN MINÚSCULAS
+  const { rol, contrasena, nombre, apellido_p, apellido_m, edad, fecha_de_nacimiento } = req.body;
 
   try {
-
-
-    // 1. Hashear la contraseña
-    const hashedPassword = await bcrypt.hash(contrasenaParaHashear, saltRounds);
-
-    // ... (el resto de tu código para encriptar y guardar se queda igual)
+    // 2. Hashear y encriptar usando las variables en minúsculas
+    const hashedPassword = await bcrypt.hash(contrasena, saltRounds);
     const encryptedNombre = encrypt(nombre);
-    const encryptedApellido_P = encrypt(apellido_P);
-    const encryptedApellido_M = apellido_M ? encrypt(apellido_M) : encrypt('');
-    const encryptedEdad = encrypt(Edad.toString());
-    const encryptedFecha = encrypt(Fecha_de_nacimiento);
+    const encryptedApellido_p = encrypt(apellido_p);
+    const encryptedApellido_m = apellido_m ? encrypt(apellido_m) : encrypt('');
+    const encryptedEdad = encrypt(edad.toString());
+    const encryptedFecha = encrypt(fecha_de_nacimiento);
 
-    const sql = `
-      INSERT INTO Usuario (rol, contrasena, nombre, apellido_P, apellido_M, Edad, Fecha_de_nacimiento)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `;
+    // 3. Insertar los datos en Supabase
+    const { data, error } = await supabase
+      .from('usuario')
+      .insert([
+        { 
+          rol: rol, 
+          contrasena: hashedPassword, 
+          nombre: encryptedNombre, 
+          apellido_p: encryptedApellido_p, // Asegúrate que aquí la clave sea minúscula
+          apellido_m: encryptedApellido_m, // Asegúrate que aquí la clave sea minúscula
+          edad: encryptedEdad,             // Asegúrate que aquí la clave sea minúscula
+          fecha_de_nacimiento: encryptedFecha // Asegúrate que aquí la clave sea minúscula
+        }
+      ])
+      .select();
 
-    db.query(sql, [rol, hashedPassword, encryptedNombre, encryptedApellido_P, encryptedApellido_M, encryptedEdad, encryptedFecha], (err, result) => {
-      if (err) {
-        console.error("Error al crear usuario:", err);
-        return res.status(500).json({ error: err.message });
-      }
-      res.status(201).json({ message: "Usuario creado", id: result.insertId });
-    });
+    if (error) {
+      console.error("Error al crear usuario en Supabase:", error);
+      return res.status(500).json({ error: error.message });
+    }
 
-  } catch (error) {
-    console.error("Error al hashear la contrasena:", error); 
+    res.status(201).json({ message: "Usuario creado exitosamente", usuario: data[0] });
+
+  } catch (processingError) {
+    console.error("Error al procesar datos para crear usuario:", processingError); 
     return res.status(500).json({ message: "Error interno del servidor." });
   }
 });
 
-// ✅ READ (todos los usuarios) - CON DESENCRIPTACIÓN
-app.get("/usuarios", (req, res) => {
-  db.query("SELECT no_lista, rol, nombre, apellido_P, apellido_M, Edad, Fecha_de_nacimiento FROM Usuario", (err, results) => {
-    if (err) {
-        console.error("Error al obtener usuarios:", err);
-        return res.status(500).json({ error: err.message });
-    }
+// ✅ READ (todos los usuarios) - VERSIÓN FINAL CORREGIDA
+app.get("/usuarios", async (req, res) => {
+  // 1. La consulta a Supabase, AHORA CON MINÚSCULAS
+  const { data: results, error: err } = await supabase
+    .from('usuario')
+    .select('no_lista, rol, nombre, apellido_p, apellido_m, edad, fecha_de_nacimiento'); // ✨ CORREGIDO
+
+  // 2. Manejo de errores
+  if (err) {
+    console.error("Error al obtener usuarios:", err);
+    return res.status(500).json({ error: err.message });
+  }
     
-    // Desencriptamos los datos antes de enviarlos al cliente
-    const usuariosDesencriptados = results.map(user => {
-      try {
-        return {
-          ...user,
-          nombre: decrypt(user.nombre),
-          apellido_P: decrypt(user.apellido_P),
-          apellido_M: decrypt(user.apellido_M),
-          Edad: parseInt(decrypt(user.Edad), 10), // Convertimos de nuevo a número
-          Fecha_de_nacimiento: decrypt(user.Fecha_de_nacimiento)
-        };
-      } catch (e) {
-        console.error(`Fallo al desencriptar datos para el usuario ${user.no_lista}:`, e);
-        // Decide cómo manejar el error: puedes omitir el usuario o devolverlo con campos nulos
-        return { ...user, nombre: 'Error de datos', apellido_P: '', apellido_M: '', Edad: 0, Fecha_de_nacimiento: '' };
-      }
-    });
-
-    res.json(usuariosDesencriptados);
+  // 3. Desencriptamos los datos usando claves en MINÚSCULAS
+  const usuariosDesencriptados = results.map(user => {
+    try {
+      return {
+        // ...user, // No es necesario si redefinimos todos los campos
+        no_lista: user.no_lista,
+        rol: user.rol,
+        nombre: decrypt(user.nombre),
+        apellido_p: decrypt(user.apellido_p), // ✨ CORREGIDO
+        apellido_m: decrypt(user.apellido_m), // ✨ CORREGIDO
+        edad: parseInt(decrypt(user.edad), 10), // ✨ CORREGIDO
+        fecha_de_nacimiento: decrypt(user.fecha_de_nacimiento) // ✨ CORREGIDO
+      };
+    } catch (e) {
+      console.error(`Fallo al desencriptar datos para el usuario ${user.no_lista}:`, e);
+      return { ...user, nombre: 'Error de datos' };
+    }
   });
-});
 
-
+  // 4. Enviamos la respuesta
+  res.json(usuariosDesencriptados);
+}); 
 
 
 // ✅ UPDATE (actualizar usuario) - CON ENCRIPTACIÓN
