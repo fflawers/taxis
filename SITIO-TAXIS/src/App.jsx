@@ -4,7 +4,7 @@ import ProtectedRoute from "./components/secure/ProtectedRoute";
 
 import UsuariosPage from "./components/views/UsuariosPage";
 import TaxisPage from "./components/views/TaxisPage";
-import Index from "./components";
+import Index from "./components/Index/Index";
 import Usuarios from "./components/views/Usuarios";
 import TaxistasPage from "./components/viewsTaxis/TaxistasPage";
 import IncidenciasPage from "./components/views/IncidenciasPage";

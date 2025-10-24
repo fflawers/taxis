@@ -2,11 +2,11 @@
 
 import React, { Fragment, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "./secure/AuthContext";  // ✅ 1. Importa el hook (ajusta la ruta si es necesario)
+import { useAuth } from "../secure/AuthContext";  // ✅ 1. Importa el hook (ajusta la ruta si es necesario)
 
-import Banner from "./Banner/Banner";
-import Formulario from "./Formularios/Formulario";
-import IndexFooter from "./Footers/IndexFooter";
+import Banner from "../Banner/Banner";
+import Formulario from "../Formularios/Formulario";
+import IndexFooter from "../Footers/IndexFooter";
 
 export default function Index() {
   // ✅ 2. Llama a los hooks para obtener el estado y la función de navegación
