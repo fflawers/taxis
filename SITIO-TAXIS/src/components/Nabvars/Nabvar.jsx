@@ -1,16 +1,21 @@
-// src/components/Navbar.jsx
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../secure/AuthContext"; // 1. Importa el hook
+import { useAuth } from "../secure/AuthContext";
+import { useState } from 'react'; 
 
 function Navbar() {
-  // 2. Obtén el estado de autenticación y las funciones
-  const {  logout } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
+  // 2. Estado para manejar el menú responsive
+  const [isNavCollapsed, setIsNavCollapsed] = useState(true);
+
   const handleLogout = () => {
-    logout();      // Limpia la sesión
-    navigate('/'); // Redirige al login
+    logout();
+    navigate('/');
   };
+
+  // 3. Función para cambiar el estado del menú
+  const handleNavCollapse = () => setIsNavCollapsed(!isNavCollapsed);
 
   return (
     <div className="index-navbar glass_nav">
@@ -27,25 +32,31 @@ function Navbar() {
             aria-controls="navbarOffcanvas"
             type="button"
             aria-label="Toggle navigation"
-            className="hamburger navbar-toggler collapsed"
+            className="hamburger navbar-toggler" // <--- MODIFICADO (quitamos 'collapsed')
+            onClick={handleNavCollapse} // <--- 4. Evento onClick
+            aria-expanded={!isNavCollapsed} // <--- 5. Accesibilidad
           >
             <span className="navbar-toggler-icon"></span>
           </button>
-          {/* Usamos justify-content-between para empujar el logout a la derecha */}
-          <div className="justify-content-between navbar-collapse collapse" id="navbarOffcanvas">
-            {/* ENLACES DE NAVEGACIÓN */}
-            <div className="d-none d-lg-flex navbar-nav">
-              <Link to="/inicio" className="nav-link">Inicio</Link>
-              <Link to="/usuarios" className="nav-link">Administrar Usuarios</Link>
-              <Link to="/taxis" className="nav-link">Administrar Taxis</Link>
-              <Link to="/incidencias" className="nav-link">Administrar Incidencias</Link>
-              <Link to="/acuerdo" className="nav-link">Administrar Acuerdos</Link>
-              <Link to="/reports" className="nav-link">Administrar Reportes</Link>
+          
+          {/* 6. Clases dinámicas para mostrar/ocultar el menú */}
+          <div 
+            className={`justify-content-between navbar-collapse ${isNavCollapsed ? 'collapse' : ''}`} 
+            id="navbarOffcanvas"
+          >
+            {/* 7. Clases MODIFICADAS para mostrar en móvil */}
+            <div className="navbar-nav me-auto mb-2 mb-lg-0">
+              {/* Añadimos un onClick para cerrar el menú al navegar en móvil */}
+              <Link to="/inicio" className="nav-link" onClick={() => setIsNavCollapsed(true)}>Inicio</Link>
+              <Link to="/usuarios" className="nav-link" onClick={() => setIsNavCollapsed(true)}>Administrar Usuarios</Link>
+              <Link to="/taxis" className="nav-link" onClick={() => setIsNavCollapsed(true)}>Administrar Taxis</Link>
+              <Link to="/incidencias" className="nav-link" onClick={() => setIsNavCollapsed(true)}>Administrar Incidencias</Link>
+              <Link to="/acuerdo" className="nav-link" onClick={() => setIsNavCollapsed(true)}>Administrar Acuerdos</Link>
+              <Link to="/reports" className="nav-link" onClick={() => setIsNavCollapsed(true)}>Administrar Reportes</Link>
             </div>
 
-            {/* 3. SECCIÓN DE USUARIO Y LOGOUT */}
-            <div className="d-none d-lg-flex align-items-center">
-             
+            {/* 8. Clases MODIFICADAS para mostrar en móvil (con margen) */}
+            <div className="d-flex align-items-center mt-3 mt-lg-0">
               <button className="btn btn-outline-danger" onClick={handleLogout}>
                 Cerrar Sesión
               </button>

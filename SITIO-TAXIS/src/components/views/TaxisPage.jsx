@@ -7,7 +7,6 @@ function TaxisPage() {
   const [taxis, setTaxis] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
 
-  // ✅ CORREGIDO: Estado del formulario con 'año'
 const [form, setForm] = useState({
   marca: "",
   modelo: "",
@@ -48,7 +47,6 @@ const [form, setForm] = useState({
 
   const handleChange = (e) => {
   const { name, value } = e.target;
-  // ✨ Corregido
   if (name === "año") { 
     if (/^\d{0,4}$/.test(value)) {
       setForm({ ...form, [name]: value });
@@ -92,13 +90,12 @@ const [form, setForm] = useState({
     }
   };
 
-  // ✅ CORREGIDO: Previene el error de "uncontrolled input"
   const handleEditClick = (taxi) => {
   setTaxiAEditar(taxi);
   setFormEdicion({
     marca: taxi.marca || '',
     modelo: taxi.modelo || '',
-    año: taxi.año || '', // ✨ Corregido
+    año: taxi.año || '', 
     placa: taxi.placa || '',
     no_lista: taxi.no_lista || '',
   });
@@ -135,7 +132,6 @@ const [form, setForm] = useState({
       <h1 className="container text-center mt-4 fw-bold">Administrar Taxis</h1>
       <div className="container">
         <h2 className="justify-content-center">Agregar Taxi:</h2>
-        {/* ✅ CORREGIDO: Atributos 'name' de los inputs en minúsculas */}
         <form onSubmit={handleSubmit} className="container text-center my-4">
           <div className="row g-3 justify-content-center">
             <div className="col-md-2">
@@ -153,7 +149,6 @@ const [form, setForm] = useState({
             <div className="col-md-2">
               <select className="inputTP" name="no_lista" value={form.no_lista} onChange={handleChange} required>
                 <option value="">-- Selecciona un Conductor --</option>
-                {/* ✅ CORREGIDO: Muestra de datos con clave en minúscula */}
                 {usuarios.map((u) => (
                   <option key={u.no_lista} value={u.no_lista}>{u.nombre} {u.apellido_p}</option>
                 ))}
@@ -182,7 +177,6 @@ const [form, setForm] = useState({
               </tr>
             </thead>
             <tbody>
-              {/* ✅ CORREGIDO: Muestra de datos con claves en minúsculas */}
               {taxis.map((t) => (
               <tr key={t.economico}>
                 <td>{t.economico}</td>
@@ -192,8 +186,8 @@ const [form, setForm] = useState({
                 <td>{t.placa}</td>
                 <td>{t.nombre_conductor || "Sin asignar"}</td>
                 <td>
-                  <button className="btn btn-sm btn-info me-2" onClick={() => handleEditClick(t)}>Editar</button>
-                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(t.economico)}>Eliminar</button>
+                  <button className="btn btn-sm btn-info me-2 mb-3" onClick={() => handleEditClick(t)}>Editar</button>
+                  <button className="btn btn-sm btn-danger mb-3" onClick={() => handleDelete(t.economico)}>Eliminar</button>
                 </td>
               </tr>
             ))}
@@ -202,7 +196,6 @@ const [form, setForm] = useState({
         </div>
       </div>
 
-      {/* ✅ CORREGIDO: Modal de edición con 'name' y 'value' en minúsculas */}
       {taxiAEditar && formEdicion && (
         <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-dialog-centered">
@@ -228,7 +221,7 @@ const [form, setForm] = useState({
                   </div>
                   <div className="modal-footer">
                     <button type="button" className="btn btn-secondary" onClick={() => setTaxiAEditar(null)}>Cancelar</button>
-                    <button type="submit" className="btn btn-primary">Guardar Cambios</button>
+                    <button type="submit" className="btn btn-green-general">Guardar Cambios</button>
                   </div>
                 </form>
               </div>

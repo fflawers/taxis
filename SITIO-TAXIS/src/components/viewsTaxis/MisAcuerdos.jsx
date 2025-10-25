@@ -22,8 +22,8 @@ function MisAcuerdos() {
       <div className="container mt-4">
         <h1 className="text-center fw-bold">Acuerdos de Mis Reportes</h1>
         <div className="table-responsive mt-4">
-          <table className="table table-striped table-hover">
-            <thead className="table-dark">
+          <table className="table table-bordered table-hover align-middle text-center">
+            <thead>
               <tr>
                 <th>ID Acuerdo</th>
                 <th>Incidencia</th>

@@ -6,7 +6,6 @@ function IncidenciasPage() {
   const [incidencias, setIncidencias] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
 
-  // ✅ CORREGIDO: Estado inicial con minúsculas
   const [form, setForm] = useState({ descripcion: "", observaciones: "", no_lista: "" });
 
   const [incidenciaAEditar, setIncidenciaAEditar] = useState(null);
@@ -77,12 +76,11 @@ function IncidenciasPage() {
     }
   };
 
-  // ✅ CORREGIDO: Previene error de input no controlado
   const handleEditClick = (incidencia) => {
     setIncidenciaAEditar(incidencia);
     setFormEdicion({
       descripcion: incidencia.descripcion || '',
-      observaciones: incidencia.observaciones || '', // Corregido
+      observaciones: incidencia.observaciones || '', 
       no_lista: incidencia.no_lista || ''
     });
   };
@@ -123,44 +121,41 @@ function IncidenciasPage() {
         <h1 className="text-center fw-bold">Gestión de Incidencias</h1>
         <div className="card p-3 my-4">
           <h2 className="fw-bold">Agregar Nueva Incidencia</h2>
-          {/* ✅ CORREGIDO: Atributo 'name' en minúsculas */}
           <form onSubmit={handleSubmit}>
             <div className="row g-3 align-items-end">
               <div className="col-md-4">
                 <label className="form-label">Descripción</label>
-                <input type="text" name="descripcion" placeholder="Ej. Falla mecánica" value={form.descripcion} onChange={handleChange} className="form-control" required />
+                <input type="text" name="descripcion" placeholder="Ej. Falla mecánica" value={form.descripcion} onChange={handleChange} className="inputTP" required />
               </div>
               <div className="col-md-3">
                 <label className="form-label">Observaciones</label>
-                <input type="text" name="observaciones" placeholder="(Opcional)" value={form.observaciones} onChange={handleChange} className="form-control" />
+                <input type="text" name="observaciones" placeholder="(Opcional)" value={form.observaciones} onChange={handleChange} className="inputTP" />
               </div>
               <div className="col-md-3">
                 <label className="form-label">Conductor que reporta</label>
-                <select name="no_lista" value={form.no_lista} onChange={handleChange} className="form-select" required>
+                <select name="no_lista" value={form.no_lista} onChange={handleChange} className="inputTP" required>
                   <option value="">-- Seleccionar --</option>
-                  {/* ✅ CORREGIDO: Muestra datos con claves minúsculas */}
                   {usuarios.map((u) => (
                     <option key={u.no_lista} value={u.no_lista}>{u.nombre} {u.apellido_p}</option>
                   ))}
                 </select>
               </div>
               <div className="col-md-2">
-                <button type="submit" className="btn btn-primary w-100">Agregar</button>
+                <button type="submit" className="btn btn-green ">Agregar</button>
               </div>
             </div>
           </form>
         </div>
 
         <h2 className="fw-bold">Incidencias Registradas</h2>
-        <div className="table-responsive">
-          <table className="table table-striped table-hover">
-            <thead className="table-dark">
+        <div className="table-responsive my-5">
+          <table className="table table-bordered table-hover align-middle text-center">
+            <thead>
               <tr>
                 <th>ID</th><th>Descripción</th><th>Conductor</th><th>Observaciones</th><th>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {/* ✅ CORREGIDO: Muestra datos con claves minúsculas */}
               {incidencias.map((inc) => (
                 <tr key={inc.id_incidencia}>
                   <td>{inc.id_incidencia}</td>
@@ -178,7 +173,6 @@ function IncidenciasPage() {
         </div>
       </div>
 
-      {/* ✅ CORREGIDO: Modal con 'name' y 'value' en minúsculas */}
       {incidenciaAEditar && formEdicion && (
         <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-dialog-centered">

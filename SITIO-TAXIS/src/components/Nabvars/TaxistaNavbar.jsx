@@ -1,16 +1,21 @@
-// src/components/TaxistaNavbar.jsx (o como se llame tu archivo)
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../secure/AuthContext"; // 1. Importa el hook
+import { useAuth } from "../secure/AuthContext";
+import { useState } from 'react'; // <--- 1. Importa useState
 
 function TaxistaNavbar() {
-  // 2. Obtén el estado de autenticación y las funciones
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  // 2. Estado para manejar el menú responsive
+  const [isNavCollapsed, setIsNavCollapsed] = useState(true);
+
   const handleLogout = () => {
-    logout();      // Limpia la sesión
-    navigate('/'); // Redirige al login
+    logout();
+    navigate('/');
   };
+
+  // 3. Función para cambiar el estado del menú
+  const handleNavCollapse = () => setIsNavCollapsed(!isNavCollapsed);
 
   return (
     <div className="index-navbar glass_nav">
@@ -27,22 +32,29 @@ function TaxistaNavbar() {
             aria-controls="navbarOffcanvas"
             type="button"
             aria-label="Toggle navigation"
-            className="hamburger navbar-toggler collapsed"
+            className="hamburger navbar-toggler" // <--- MODIFICADO (quitamos 'collapsed')
+            onClick={handleNavCollapse} // <--- 4. Evento onClick
+            aria-expanded={!isNavCollapsed} // <--- 5. Accesibilidad
           >
             <span className="navbar-toggler-icon"></span>
           </button>
-          <div className="justify-content-between navbar-collapse collapse" id="navbarOffcanvas">
-            {/* ENLACES DE NAVEGACIÓN */}
-            <div className="d-none d-lg-flex navbar-nav">
-              <Link to="/taxistas" className="nav-link">Inicio</Link>
-              {/* Rutas corregidas para coincidir con App.jsx */}
-              <Link to="/reportes" className="nav-link">Ver Mis Reportes</Link>
-              <Link to="/resolution" className="nav-link">Ver Mis Acuerdos</Link>
+
+          {/* 6. Clases dinámicas para mostrar/ocultar el menú */}
+          <div 
+            className={`justify-content-between navbar-collapse ${isNavCollapsed ? 'collapse' : ''}`} 
+            id="navbarOffcanvas"
+          >
+            {/* 7. Clases MODIFICADAS para mostrar en móvil */}
+            <div className="navbar-nav me-auto mb-2 mb-lg-0">
+              {/* Añadimos un onClick para cerrar el menú al navegar en móvil */}
+              <Link to="/taxistas" className="nav-link" onClick={() => setIsNavCollapsed(true)}>Inicio</Link>
+              <Link to="/reportes" className="nav-link" onClick={() => setIsNavCollapsed(true)}>Ver Mis Reportes</Link>
+              <Link to="/resolution" className="nav-link" onClick={() => setIsNavCollapsed(true)}>Ver Mis Acuerdos</Link>
             </div>
 
-            {/* 3. SECCIÓN DE USUARIO Y LOGOUT */}
-            <div className="d-none d-lg-flex align-items-center">
-              <span className="navbar-text me-3" style={{ color: 'white' }}>
+            {/* 8. Clases MODIFICADAS para mostrar y apilar en móvil */}
+            <div className="d-flex flex-column flex-lg-row align-items-start align-items-lg-center mt-3 mt-lg-0">
+              <span className="navbar-text me-lg-3 mb-2 mb-lg-0" style={{ color: 'white' }}>
                 Hola, {user?.nombre}
               </span>
               <button className="btn btn-outline-danger" onClick={handleLogout}>

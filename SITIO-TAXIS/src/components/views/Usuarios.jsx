@@ -18,8 +18,8 @@ function Usuarios() {
   return (
     <div>
         <Navbar/>
-      <h1 className="container">Hola, {user?.nombre} esta es la lista de usuarios activos:</h1>
-      <ul className="container">
+      <h1 className="container mt-4">Hola, {user?.nombre} esta es la lista de usuarios activos:</h1>
+      <ul className="container fw-bolder my-4">
        {usuarios.map(u => (
           <li key={u.no_lista}>
            {u.nombre} {u.apellido_P} {u.apellido_M} - {u.rol}

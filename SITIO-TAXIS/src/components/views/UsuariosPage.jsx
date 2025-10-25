@@ -5,7 +5,6 @@ import IndexFooter from "../Footers/IndexFooter";
 function UsuariosPage() {
   const [usuarios, setUsuarios] = useState([]);
 
-  // ✅ CORREGIDO: Estado del formulario con claves en minúsculas
   const [form, setForm] = useState({
     rol: "",
     contrasena: "",
@@ -39,16 +38,15 @@ function UsuariosPage() {
     fetch(`${import.meta.env.VITE_API_URL}/usuarios`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form), // 'form' ya tiene las claves en minúsculas
+      body: JSON.stringify(form), 
     })
       .then((res) => {
-        if (!res.ok) { // Si la respuesta no es exitosa (ej. 400)
+        if (!res.ok) { 
             return res.json().then(err => { throw new Error(err.message) });
         }
         return res.json();
       })
       .then(() => {
-        // Reseteamos el formulario a su estado inicial
         setForm({
           rol: "", contrasena: "", nombre: "", apellido_p: "",
           apellido_m: "", edad: "", fecha_de_nacimiento: "",
@@ -65,7 +63,6 @@ function UsuariosPage() {
       .catch((err) => console.error(err));
   };
 
-  // ✅ CORREGIDO: Asegura que ningún valor sea null/undefined para evitar error de input no controlado
   const handleEditClick = (usuario) => {
     setUsuarioAEditar(usuario);
     const usuarioSeguro = {
@@ -75,7 +72,7 @@ function UsuariosPage() {
       apellido_m: usuario.apellido_m || '',
       edad: usuario.edad || '',
       fecha_de_nacimiento: usuario.fecha_de_nacimiento || '',
-      contrasena: "", // Limpiamos la contraseña por seguridad
+      contrasena: "", 
     };
     setFormEdicion(usuarioSeguro);
   };
@@ -113,7 +110,6 @@ function UsuariosPage() {
       <h1 className="container text-center mt-4 fw-bold">Gestión de Usuarios</h1>
 
       <h2 className="fw-bold container">Crear Nuevo Usuario:</h2>
-      {/* ✅ CORREGIDO: Formulario de creación con 'name' en minúsculas */}
       <form onSubmit={handleSubmit} className="container text-center my-4">
         <div className="row g-3 justify-content-center">
           <div className="col-md-3">
@@ -145,8 +141,7 @@ function UsuariosPage() {
 
       <div className="container">
         <h2 className="fw-bold">Usuarios activos:</h2>
-        <ul className="list-group">
-          {/* ✅ CORREGIDO: Muestra los datos con claves en minúsculas */}
+        <ul className="list-group my-5">
           {usuarios.map((u) => (
             <li className="list-group-item d-flex justify-content-between align-items-center" key={u.no_lista}>
               <span>ID: {u.no_lista} - {u.nombre} {u.apellido_p} ({u.rol})</span>
@@ -159,7 +154,6 @@ function UsuariosPage() {
         </ul>
       </div>
 
-      {/* ✅ CORREGIDO: Modal de edición con 'name' y 'value' en minúsculas */}
       {usuarioAEditar && formEdicion && (
         <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-dialog-centered">

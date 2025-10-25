@@ -282,6 +282,18 @@ font-size: 1.1em;
     padding: 0em 0em !important;
     height: 1.7em;
 }
+.btn-green-general {
+    font-size: 15px !important;
+    background-color: #06bc50 !important;
+    margin: 10px  !important;
+    border-radius: 10px;
+    font-weight: 500 !important;
+    color: #fff !important;
+    width: 40%;
+    border: none;
+    padding: 0em 0em !important;
+    height: 2.5em;
+}
 
 /******************************** ReportesPage **********************************/
 
@@ -299,6 +311,10 @@ font-size: 1.1em;
     height: 1.7em;
     text-align: justify ;
     padding-left: 15px;
+}
+
+.text-taxi{
+font-size: 1.5em;
 }
 
 .table td,

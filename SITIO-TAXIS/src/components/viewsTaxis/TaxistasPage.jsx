@@ -11,9 +11,10 @@ const TaxistasPage = () =>{
         <div>
             <TaxistaNavbar/>
             <div className="m-0 p-0">
-            <h1 className="container">
-                Hola, {user?.nombre}
+            <h1 className="text-center container mt-5 fw-bolder">
+                Hola.
             </h1>
+            <p className="fw-bolder container text-taxi my-5 text-center">Aquí encontrarás los reportes y acuerdos que se generen con tu taxi en el menú superior. <br/>Que tengas un buen día {user?.nombre}</p>
             </div>
             <IndexFooter/>
         

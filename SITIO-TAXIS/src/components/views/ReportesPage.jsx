@@ -101,25 +101,23 @@ function ReportesPage() {
         <h1 className="text-center fw-bold">Gestión de Reportes</h1>
         <div className="card p-3 my-4">
           <h2 className="fw-bold">Generar Nuevo Reporte</h2>
-          {/* ✅ CORREGIDO: 'name' en minúsculas */}
           <form onSubmit={handleSubmit} className="row g-3">
-            <div className="col-md-4"><label className="form-label">Conductor</label><select name="no_lista" value={form.no_lista} onChange={handleChange} className="form-select" required><option value="">-- Seleccionar --</option>{taxistas.map(t => <option key={t.no_lista} value={t.no_lista}>{t.nombre} {t.apellido_p}</option>)}</select></div>
-            <div className="col-md-4"><label className="form-label">Taxi (Económico)</label><select name="economico" value={form.economico} onChange={handleChange} className="form-select" required><option value="">-- Seleccionar --</option>{taxis.map(t => <option key={t.economico} value={t.economico}>#{t.economico} - {t.placa}</option>)}</select></div>
-            <div className="col-md-4"><label className="form-label">Fecha del Reporte</label><input type="date" name="fecha_reporte" value={form.fecha_reporte} onChange={handleChange} className="form-control" required /></div>
-            <div className="col-md-6"><label className="form-label">Incidencia</label><select name="id_incidencia" value={form.id_incidencia} onChange={handleChange} className="form-select" required><option value="">-- Seleccionar --</option>{incidencias.map(i => <option key={i.id_incidencia} value={i.id_incidencia}>{i.descripcion}</option>)}</select></div>
-            <div className="col-md-6"><label className="form-label">Acuerdo</label><select name="id_acuerdo" value={form.id_acuerdo} onChange={handleChange} className="form-select" required><option value="">-- Seleccionar --</option>{acuerdos.map(a => <option key={a.id_acuerdo} value={a.id_acuerdo}>{(a.descripcion || '').substring(0, 50)}...</option>)}</select></div>
-            <div className="col-12"><label className="form-label">Observaciones</label><textarea name="observaciones" value={form.observaciones} onChange={handleChange} className="form-control" rows="3"></textarea></div>
-            <div className="col-12"><button type="submit" className="btn btn-primary">Guardar Reporte</button></div>
+            <div className="col-md-4"><label className="form-label">Conductor</label><select name="no_lista" value={form.no_lista} onChange={handleChange} className="inputTP" required><option value="">-- Seleccionar --</option>{taxistas.map(t => <option key={t.no_lista} value={t.no_lista}>{t.nombre} {t.apellido_p}</option>)}</select></div>
+            <div className="col-md-4"><label className="form-label">Taxi (Económico)</label><select name="economico" value={form.economico} onChange={handleChange} className="inputTP" required><option value="">-- Seleccionar --</option>{taxis.map(t => <option key={t.economico} value={t.economico}>#{t.economico} - {t.placa}</option>)}</select></div>
+            <div className="col-md-4"><label className="form-label">Fecha del Reporte</label><input type="date" name="fecha_reporte" value={form.fecha_reporte} onChange={handleChange} className="inputTP" required /></div>
+            <div className="col-md-6"><label className="form-label">Incidencia</label><select name="id_incidencia" value={form.id_incidencia} onChange={handleChange} className="inputTP" required><option value="">-- Seleccionar --</option>{incidencias.map(i => <option key={i.id_incidencia} value={i.id_incidencia}>{i.descripcion}</option>)}</select></div>
+            <div className="col-md-6"><label className="form-label">Acuerdo</label><select name="id_acuerdo" value={form.id_acuerdo} onChange={handleChange} className="inputTP" required><option value="">-- Seleccionar --</option>{acuerdos.map(a => <option key={a.id_acuerdo} value={a.id_acuerdo}>{(a.descripcion || '').substring(0, 50)}...</option>)}</select></div>
+            <div className="col-12"><label className="form-label">Observaciones</label><textarea name="observaciones" value={form.observaciones} onChange={handleChange} className="inputTP" rows="3"></textarea></div>
+            <div className="col-12"><button type="submit" className="btn btn-green-general w-25">Guardar Reporte</button></div>
           </form>
         </div>
         <h2 className="fw-bold">Historial de Reportes</h2>
-        <div className="table-responsive">
-          <table className="table table-striped table-hover">
-            <thead className="table-dark">
+        <div className="table-responsive my-5">
+          <table className="table table-bordered table-hover align-middle text-center">
+            <thead>
               <tr><th>ID</th><th>Fecha</th><th>Conductor</th><th>Taxi (Placa)</th><th>Incidencia</th><th>Observaciones</th><th>Acciones</th></tr>
             </thead>
             <tbody>
-              {/* ✅ CORREGIDO: Propiedades en minúsculas */}
               {reportes.map((rep) => (
                 <tr key={rep.id_reporte}>
                   <td>{rep.id_reporte}</td>
@@ -145,7 +143,6 @@ function ReportesPage() {
               <div className="modal-header"><h5 className="modal-title">Editando Reporte #{reporteAEditar.id_reporte}</h5><button type="button" className="btn-close" onClick={() => setReporteAEditar(null)}></button></div>
               <form onSubmit={handleUpdateSubmit}>
                 <div className="modal-body row g-3">
-                  {/* ✅ CORREGIDO: 'name' y 'value' en minúsculas */}
                   <div className="col-md-6"><label className="form-label">Conductor</label><select name="no_lista" value={formEdicion.no_lista} onChange={handleEditChange} className="form-select" required><option value="">-- Seleccionar --</option>{taxistas.map(t => <option key={t.no_lista} value={t.no_lista}>{t.nombre} {t.apellido_p}</option>)}</select></div>
                   <div className="col-md-6"><label className="form-label">Taxi (Económico)</label><select name="economico" value={formEdicion.economico} onChange={handleEditChange} className="form-select" required><option value="">-- Seleccionar --</option>{taxis.map(t => <option key={t.economico} value={t.economico}>#{t.economico} - {t.placa}</option>)}</select></div>
                   <div className="col-md-6"><label className="form-label">Fecha del Reporte</label><input type="date" name="fecha_reporte" value={formEdicion.fecha_reporte} onChange={handleEditChange} className="form-control" required /></div>
