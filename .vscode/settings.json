@@ -1,0 +1,23 @@
+{
+    "sqltools.connections": [
+        {
+            "pgOptions": {
+                "ssl": {
+                    "rejectUnauthorized": false
+                }
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "basetaxis1.cpem6cyuqksd.us-east-2.rds.amazonaws.com",
+            "port": 5432,
+            "sshOptions": {
+                "port": 22
+            },
+            "driver": "PostgreSQL",
+            "name": "basetaxis1",
+            "database": "postgres",
+            "username": "taxis1",
+            "password": "trol334455"
+        }
+    ]
+}

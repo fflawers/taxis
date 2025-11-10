@@ -104,7 +104,7 @@ function AcuerdosPage() {
                   {incidencias.map((inc) => (<option key={inc.id_incidencia} value={inc.id_incidencia}>{inc.id_incidencia} - {inc.descripcion}</option>))}
                 </select>
               </div>
-              <div className="col-md-2"><button type="submit" className="btn btn-primary w-100">Agregar</button></div>
+              <div className="col-md-2"><button type="submit" className="btn btn-green w-75">Agregar</button></div>
             </div>
           </form>
         </div>
