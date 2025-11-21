@@ -956,6 +956,16 @@ app.get("/acuerdos/taxista/:id", async (req, res) => {
     }
 });
 
+
+app.get("/prueba", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT NOW()");
+    res.json({ ok: true, time: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // ===============================================
 // 🚀 SERVIDOR (VERSIÓN CORREGIDA PARA DESPLIEGUE)
 // ===============================================
@@ -968,3 +978,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Servidor backend corriendo en el puerto ${PORT}`);
 });
+
