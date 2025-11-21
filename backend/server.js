@@ -89,7 +89,9 @@ app.post("/usuarios", async (req, res) => {
       contrasena: hashedPassword,
       nombre: encrypt(nombre),
       apellido_p: encrypt(apellido_p),
-      apellido_m: apellido_m ? encrypt(apellido_m) : encrypt(''),
+      apellido_m: apellido_m 
+        ? encrypt(apellido_m.toString()) // Asegura que se encripta algo válido
+        : null, // Si es null o undefined, envías null a la base de datos
       edad: encrypt(edad.toString()),
       fecha_de_nacimiento: encrypt(fecha_de_nacimiento)
     };
