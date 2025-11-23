@@ -488,8 +488,7 @@ app.post("/incidencias", async (req, res) => {
         }
         
         // --- CONSULTA 2: Insertar la incidencia (CORREGIDO) ---
-        const insertQuery = `
-            INSERT INTO incidencia (descripcion, observaciones, no_lista_conductor) 
+        const insertQuery = `INSERT INTO incidencia (descripcion, observaciones, no_lista_conductor) 
             VALUES ($1, $2, $3) 
             RETURNING id_incidencia;`;
         const values = [descripcion, observaciones, no_lista]; // no_lista es el valor, no el nombre de la columna
@@ -508,8 +507,7 @@ app.post("/incidencias", async (req, res) => {
 app.get("/incidencias", async (req, res) => {
     try {
         // 1. Define la consulta con el JOIN explícito (CORREGIDO)
-        const sqlQuery = `
-            SELECT 
+        const sqlQuery = `SELECT 
                 i.id_incidencia, i.descripcion, i.observaciones, i.no_lista_conductor, 
                 u.nombre, u.apellido_p
             FROM incidencia i
@@ -574,12 +572,10 @@ app.put("/incidencias/:id", async (req, res) => {
         }
 
         // --- CONSULTA 2: Actualizar la incidencia (CORREGIDO) ---
-        const updateQuery = `
-            UPDATE incidencia 
+        const updateQuery = `UPDATE incidencia 
             SET descripcion = $1, observaciones = $2, no_lista_conductor = $3 
-            WHERE id_incidencia = $4
-        `;
-        const values = [descripcion, observaciones, no_lista, id];
+            WHERE id_incidencia = $4`;
+        const values = [descripcion, observaciones, no_lista, id];  
         
         await pool.query(updateQuery, values);
         
