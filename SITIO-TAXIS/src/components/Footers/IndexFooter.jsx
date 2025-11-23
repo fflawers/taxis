@@ -25,6 +25,9 @@ function IndexFooter() {
                                 alt="marcacion"
                             />
                         </div>
+
+
+
                          <p className="mb-1 mt-4"><b>CONTÁCTANOS</b></p>
                         <p className="mb-3">
                             Desde cualquier número al <br />

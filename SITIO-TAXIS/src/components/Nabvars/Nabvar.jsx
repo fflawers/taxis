@@ -21,7 +21,7 @@ function Navbar() {
     <div className="index-navbar glass_nav">
       <nav className="pt-2 transition-all navbar navbar-expand-lg navbar-light">
         <div className="backgroundResponsive navbar-default py-1 container">
-          <Link to="/inicio" className="mx-lg-3 mx-0 text-lg-end text-start navbar-brand">
+          <Link to="/inicio" className="mx-0 text-center navbar-brand">
             <img
               src="https://proyectotaxis.s3.us-east-2.amazonaws.com/taxilogo.png"
               alt="Pillo_Logo"
@@ -32,9 +32,9 @@ function Navbar() {
             aria-controls="navbarOffcanvas"
             type="button"
             aria-label="Toggle navigation"
-            className="hamburger navbar-toggler" // <--- MODIFICADO (quitamos 'collapsed')
-            onClick={handleNavCollapse} // <--- 4. Evento onClick
-            aria-expanded={!isNavCollapsed} // <--- 5. Accesibilidad
+            className="hamburger navbar-toggler" 
+            onClick={handleNavCollapse} 
+            aria-expanded={!isNavCollapsed} 
           >
             <span className="navbar-toggler-icon"></span>
           </button>
