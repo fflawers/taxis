@@ -471,127 +471,126 @@ app.put("/taxis/:id", async (req, res) => {
 
 // ✅ CREATE (insertar incidencia con conductor) - TRADUCIDO A PG
 app.post("/incidencias", async (req, res) => {
-    const { descripcion, observaciones, no_lista } = req.body; 
+    const { descripcion, observaciones, no_lista } = req.body; 
 
-    // Tu validación (queda igual)
-    if (!descripcion || !no_lista) {
-        return res.status(400).json({ message: "La descripción y el conductor son obligatorios." });
-    }
+    // Tu validación (queda igual)
+    if (!descripcion || !no_lista) {
+        return res.status(400).json({ message: "La descripción y el conductor son obligatorios." });
+    }
 
-    try {
-        // --- CONSULTA 1: Validar el rol del conductor ---
-        const userQuery = "SELECT rol FROM usuario WHERE no_lista = $1";
-        const { rows: users } = await pool.query(userQuery, [no_lista]);
+    try {
+        // --- CONSULTA 1: Validar el rol del conductor ---
+        const userQuery = "SELECT rol FROM usuario WHERE no_lista = $1";
+        const { rows: users } = await pool.query(userQuery, [no_lista]);
 
-        if (users.length === 0 || users[0].rol !== 'Taxista') {
-            return res.status(403).json({ message: "Operación no permitida: El usuario seleccionado no es un taxista." });
-        }
-        
-        // --- CONSULTA 2: Insertar la incidencia ---
-        const insertQuery = `
-            INSERT INTO incidencia (descripcion, observaciones, no_lista) 
-            VALUES ($1, $2, $3) 
-            RETURNING id_incidencia;
-        `;
-        const values = [descripcion, observaciones, no_lista];
-        
-        const { rows } = await pool.query(insertQuery, values);
-        
-        res.status(201).json({ message: "Incidencia creada", id: rows[0].id_incidencia });
+        if (users.length === 0 || users[0].rol !== 'Taxista') {
+            return res.status(403).json({ message: "Operación no permitida: El usuario seleccionado no es un taxista." });
+        }
+        
+        // --- CONSULTA 2: Insertar la incidencia (CORREGIDO) ---
+        const insertQuery = `
+            INSERT INTO incidencia (descripcion, observaciones, no_lista_conductor) 
+            VALUES ($1, $2, $3) 
+            RETURNING id_incidencia;
+        `;
+        const values = [descripcion, observaciones, no_lista]; // no_lista es el valor, no el nombre de la columna
+        
+        const { rows } = await pool.query(insertQuery, values);
+        
+        res.status(201).json({ message: "Incidencia creada", id: rows[0].id_incidencia });
 
-    } catch (err) {
-        console.error("Error al crear incidencia:", err);
-        return res.status(500).json({ message: "Error interno.", error: err.message });
-    }
+    } catch (err) {
+        console.error("Error al crear incidencia:", err);
+        return res.status(500).json({ message: "Error interno.", error: err.message });
+    }
 });
 
 // ✅ READ (todas las incidencias) - TRADUCIDO A PG (Con JOIN)
 app.get("/incidencias", async (req, res) => {
-    try {
-        // 1. Define la consulta con el JOIN explícito
-        //    (Es más eficiente que las 3 consultas que hacías antes)
-        const sqlQuery = `
-            SELECT 
-                i.id_incidencia, i.descripcion, i.observaciones, i.no_lista,
-                u.nombre, u.apellido_p
-            FROM incidencia i
-            LEFT JOIN usuario u ON i.no_lista = u.no_lista
-        `;
+    try {
+        // 1. Define la consulta con el JOIN explícito (CORREGIDO)
+        const sqlQuery = `
+            SELECT 
+                i.id_incidencia, i.descripcion, i.observaciones, i.no_lista_conductor, 
+                u.nombre, u.apellido_p
+            FROM incidencia i
+            LEFT JOIN usuario u ON i.no_lista_conductor = u.no_lista 
+        `;
 
-        // 2. Ejecuta la consulta
-        const { rows: incidencias } = await pool.query(sqlQuery);
+        // 2. Ejecuta la consulta
+        const { rows: incidencias } = await pool.query(sqlQuery);
 
-        if (!incidencias || incidencias.length === 0) {
-            return res.json([]); 
-        }
+        if (!incidencias || incidencias.length === 0) {
+            return res.json([]); 
+        }
 
-        // 3. Tu lógica de desencriptación (casi igual)
-        const incidenciasCompletas = incidencias.map(inc => {
-            let nombreConductor = 'Sin asignar';
+        // 3. Tu lógica de desencriptación (CORREGIDO)
+        const incidenciasCompletas = incidencias.map(inc => {
+            let nombreConductor = 'Sin asignar';
 
-            if (inc.nombre) { // Si el JOIN encontró un usuario
-                try {
-                    const nombre = decrypt(inc.nombre);
-                    const apellido = decrypt(inc.apellido_p);
-                    nombreConductor = `${nombre} ${apellido}`;
-                } catch (e) {
-                    console.error(`Fallo al desencriptar datos para la incidencia ${inc.id_incidencia}:`, e);
-                    nombreConductor = 'Error de datos';
-                }
-            }
+            if (inc.nombre) { 
+                try {
+                    const nombre = decrypt(inc.nombre);
+                    const apellido = decrypt(inc.apellido_p);
+                    nombreConductor = `${nombre} ${apellido}`;
+                } catch (e) {
+                    console.error(`Fallo al desencriptar datos para la incidencia ${inc.id_incidencia}:`, e);
+                    nombreConductor = 'Error de datos';
+                }
+            }
 
-            return {
-                id_incidencia: inc.id_incidencia,
-                descripcion: inc.descripcion,
-                observaciones: inc.observaciones,
-                no_lista: inc.no_lista,
-                nombre_conductor: nombreConductor,
-            };
-        });
+            return {
+                id_incidencia: inc.id_incidencia,
+                descripcion: inc.descripcion,
+                observaciones: inc.observaciones,
+                no_lista: inc.no_lista_conductor, /* ⬅️ Lee la columna correcta */
+                nombre_conductor: nombreConductor,
+            };
+        });
 
-        res.json(incidenciasCompletas);
+        res.json(incidenciasCompletas);
 
-    } catch (error) {
-        console.error("Error al obtener incidencias:", error);
-        return res.status(500).json({ error: error.message });
-    }
+    } catch (error) {
+        console.error("Error al obtener incidencias:", error);
+        return res.status(500).json({ error: error.message });
+    }
 });
 
 // ✅ UPDATE (actualizar incidencia con conductor) - TRADUCIDO A PG
 app.put("/incidencias/:id", async (req, res) => {
-    const { id } = req.params;
-    const { descripcion, observaciones, no_lista } = req.body; 
+    const { id } = req.params;
+    const { descripcion, observaciones, no_lista } = req.body; 
 
-    // Tu validación (queda igual)
-    if (!descripcion || !no_lista) {
-         return res.status(400).json({ message: "La descripción y el conductor son obligatorios." });
-    }
+    // Tu validación (queda igual)
+    if (!descripcion || !no_lista) {
+         return res.status(400).json({ message: "La descripción y el conductor son obligatorios." });
+    }
 
-    try {
-        // --- CONSULTA 1: Validar el rol del conductor ---
-        const userQuery = "SELECT rol FROM usuario WHERE no_lista = $1";
-        const { rows: users } = await pool.query(userQuery, [no_lista]);
+    try {
+        // --- CONSULTA 1: Validar el rol del conductor ---
+        const userQuery = "SELECT rol FROM usuario WHERE no_lista = $1";
+        const { rows: users } = await pool.query(userQuery, [no_lista]);
 
-        if (users.length === 0 || users[0].rol !== 'Taxista') {
-            return res.status(403).json({ message: "Operación no permitida: El usuario seleccionado no es un taxista." });
-        }
+        if (users.length === 0 || users[0].rol !== 'Taxista') {
+            return res.status(403).json({ message: "Operación no permitida: El usuario seleccionado no es un taxista." });
+        }
 
-        // --- CONSULTA 2: Actualizar la incidencia ---
-        const updateQuery = `
-            UPDATE incidencia 
-            SET descripcion = $1, observaciones = $2, no_lista = $3 
-            WHERE id_incidencia = $4
-        `;
-        const values = [descripcion, observaciones, no_lista, id];
-        
-        await pool.query(updateQuery, values);
-        
-        res.json({ message: "Incidencia actualizada" });
+        // --- CONSULTA 2: Actualizar la incidencia (CORREGIDO) ---
+        const updateQuery = `
+            UPDATE incidencia 
+            SET descripcion = $1, observaciones = $2, no_lista_conductor = $3 
+            WHERE id_incidencia = $4
+        `;
+        const values = [descripcion, observaciones, no_lista, id];
+        
+        await pool.query(updateQuery, values);
+        
+        res.json({ message: "Incidencia actualizada" });
 
-    } catch (err) {
-         console.error("Error al actualizar incidencia:", err);
-         return res.status(500).json({ message: "Error interno.", error: err.message });
-    }
+    } catch (err) {
+         console.error("Error al actualizar incidencia:", err);
+         return res.status(500).json({ message: "Error interno.", error: err.message });
+    }
 });
 
 // ✅ DELETE (eliminar incidencia) - TRADUCIDO A PG

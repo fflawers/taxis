@@ -11,19 +11,42 @@ function IncidenciasPage() {
   const [incidenciaAEditar, setIncidenciaAEditar] = useState(null);
   const [formEdicion, setFormEdicion] = useState(null);
 
+  // 1. MANEJO DE ERRORES MEJORADO EN FETCH INCIDENCIAS
   const fetchIncidencias = async () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/incidencias`);
+
+      if (!res.ok) {
+        let errorMsg = 'Error desconocido del servidor al obtener incidencias';
+        try {
+          const errData = await res.json();
+          errorMsg = errData.message || errData.error || errorMsg;
+        } catch (e) {
+          errorMsg = `El servidor devolvió un error ${res.status}.`;
+        }
+
+        console.error("Error del servidor al obtener incidencias:", errorMsg);
+        setIncidencias([]); // <-- Asegura que el estado sea un array
+        return;
+      }
+
       const data = await res.json();
-      setIncidencias(data);
+      // Asegura que data sea un array (o lo convierte a uno si es null/undefined, aunque la API debería devolver [])
+      setIncidencias(Array.isArray(data) ? data : []); 
     } catch (error) {
-      console.error("Error al obtener incidencias:", error);
+      console.error("Error de red al obtener incidencias:", error);
+      setIncidencias([]); // <-- Asegura que el estado sea un array
     }
   };
 
   const fetchUsuarios = async () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/usuarios/taxistas`);
+      if (!res.ok) {
+        console.error("Error al obtener usuarios:", res.status);
+        setUsuarios([]);
+        return;
+      }
       const data = await res.json();
       setUsuarios(data);
     } catch (error) {
@@ -89,15 +112,17 @@ function IncidenciasPage() {
     setFormEdicion({ ...formEdicion, [e.target.name]: e.target.value });
   };
 
+  // 2. RUTA DE ACTUALIZACIÓN CORREGIDA
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
     const id = incidenciaAEditar.id_incidencia;
     if (!formEdicion.no_lista) {
-        alert("Por favor, selecciona un conductor.");
-        return;
+      alert("Por favor, selecciona un conductor.");
+      return;
     }
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/${id}`, {
+      // RUTA CORREGIDA: debe ser /incidencias/:id
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/incidencias/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formEdicion),
@@ -156,6 +181,7 @@ function IncidenciasPage() {
               </tr>
             </thead>
             <tbody>
+              {/* Se evita el error .map porque el estado ahora siempre es un array */}
               {incidencias.map((inc) => (
                 <tr key={inc.id_incidencia}>
                   <td>{inc.id_incidencia}</td>
