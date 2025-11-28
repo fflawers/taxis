@@ -282,6 +282,25 @@ font-size: 1.1em;
     padding: 0em 0em !important;
     height: 1.7em;
 }
+
+
+
+.btn-greenAP {
+    font-size: 15px !important;
+    background-color: #06bc50 !important;
+    margin: 10px  !important;
+    border-radius: 10px;
+    font-weight: 500 !important;
+    color: #fff !important;
+    width: 70%;
+    border: none;
+    padding: 0em 0em !important;
+    height: 1.7em;
+    margin-top: 2rem!important;
+}
+
+
+
 .btn-green-general {
     font-size: 15px !important;
     background-color: #06bc50 !important;

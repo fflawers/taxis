@@ -113,7 +113,17 @@ function UsuariosPage() {
       <form onSubmit={handleSubmit} className="container text-center my-4">
         <div className="row g-3 justify-content-center">
           <div className="col-md-3">
-            <input className="inputTP" name="rol" placeholder="Rol" value={form.rol} onChange={handleChange} required />
+            <select
+              className="inputTP"
+              name="rol"
+              value={form.rol}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Selecciona un rol</option>
+              <option value="Admin">Admin</option>
+              <option value="Taxista">Taxista</option>
+          </select>
           </div>
           <div className="col-md-3">
             <input className="inputTP" name="contrasena" placeholder="Contraseña" value={form.contrasena} onChange={handleChange} required />

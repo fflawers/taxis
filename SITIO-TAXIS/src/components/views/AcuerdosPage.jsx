@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Navbar from "../Nabvars/Nabvar";
 import IndexFooter from "../Footers/IndexFooter";
 
@@ -10,6 +10,7 @@ function AcuerdosPage() {
 
   const [acuerdoAEditar, setAcuerdoAEditar] = useState(null);
   const [formEdicion, setFormEdicion] = useState(null);
+  const textareaRef = useRef(null);
 
   const fetchAcuerdos = async () => {
     try {
@@ -31,6 +32,19 @@ function AcuerdosPage() {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+   const handleChange2 = (e) => {
+    // Ajustar tamaño automáticamente
+    const textarea = textareaRef.current;
+    textarea.style.height = "auto";
+    textarea.style.height = textarea.scrollHeight + "px";
+
+    // Actualizar formulario
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -93,18 +107,28 @@ function AcuerdosPage() {
           <h2 className="fw-bold">Registrar Nuevo Acuerdo</h2>
           <form onSubmit={handleSubmit}>
             <div className="row g-3 align-items-end">
-              <div className="col-md-6">
-                <label className="form-label">Descripción del Acuerdo</label>
-                <textarea name="descripcion" placeholder="Describe el acuerdo o la resolución..." value={form.descripcion} onChange={handleChange} className="inputTP" rows="3" required />
-              </div>
-              <div className="col-md-4">
+             <div className="col-md-5">
+              <label className="form-label">Descripción del Acuerdo</label>
+              <textarea
+                ref={textareaRef}
+                name="descripcion"
+                placeholder="Describe el acuerdo o la resolución..."
+                value={form.descripcion}
+                onChange={handleChange2}
+                className="inputTP"
+                rows="1"
+                style={{ overflow: "hidden", resize: "none" }} 
+                required
+              />
+            </div>
+              <div className="col-md-5">
                 <label className="form-label">Incidencia Relacionada</label>
                 <select name="id_incidencia" value={form.id_incidencia} onChange={handleChange} className="inputTP" required>
                   <option value="">-- Seleccionar Incidencia --</option>
                   {incidencias.map((inc) => (<option key={inc.id_incidencia} value={inc.id_incidencia}>{inc.id_incidencia} - {inc.descripcion}</option>))}
                 </select>
               </div>
-              <div className="col-md-2"><button type="submit" className="btn btn-green w-75">Agregar</button></div>
+              <div className="m-auto d-flex align-items-center col-md-2"><button type="submit" className="btn btn-greenAP w-75">Agregar</button></div>
             </div>
           </form>
         </div>
