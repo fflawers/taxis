@@ -959,6 +959,61 @@ app.get("/prueba", async (req, res) => {
   }
 });
 
+
+
+// ✅ ENDPOINT MAESTRO PARA EL DASHBOARD
+app.get("/dashboard/analisis/:modulo", async (req, res) => {
+  const { modulo } = req.params;
+  let sqlQuery = "";
+
+  try {
+    switch (modulo) {
+      case "ingresos_top":
+        sqlQuery = `
+          SELECT u.no_lista, u.nombre, SUM(i.monto) as total_ingreso
+          FROM ingresos i
+          JOIN usuario u ON i.no_lista = u.no_lista
+          WHERE i.fecha >= CURRENT_DATE - INTERVAL '30 days'
+          GROUP BY u.no_lista, u.nombre
+          ORDER BY total_ingreso DESC LIMIT 5`;
+        break;
+
+      case "choferes_reportados":
+        sqlQuery = `
+          SELECT u.nombre, COUNT(r.id_reporte) as total_reportes
+          FROM reporte r
+          JOIN usuario u ON r.no_lista = u.no_lista
+          WHERE r.fecha_reporte >= CURRENT_DATE - INTERVAL '30 days'
+          GROUP BY u.nombre
+          ORDER BY total_reportes DESC LIMIT 5`;
+        break;
+
+      case "resumen_30_dias":
+        sqlQuery = `
+          SELECT 
+            (SELECT COUNT(*) FROM reporte WHERE fecha_reporte >= CURRENT_DATE - INTERVAL '30 days') as total_reportes,
+            (SELECT COUNT(*) FROM usuario WHERE rol = 'Taxista') as total_taxistas,
+            (SELECT COUNT(*) FROM taxi) as total_taxis`;
+        break;
+
+      default:
+        return res.status(400).json({ message: "Módulo no válido" });
+    }
+
+    const { rows } = await pool.query(sqlQuery);
+    
+    // Desencriptar nombres si es necesario antes de enviar
+    const dataDesencriptada = rows.map(row => ({
+      ...row,
+      nombre: row.nombre ? decrypt(row.nombre) : row.nombre
+    }));
+
+    res.json(dataDesencriptada);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ===============================================
 // 🚀 SERVIDOR (VERSIÓN CORREGIDA PARA DESPLIEGUE)
 // ===============================================

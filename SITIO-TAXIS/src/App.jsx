@@ -12,6 +12,7 @@ import AcuerdosPage from "./components/views/AcuerdosPage";
 import ReportesPage from "./components/views/ReportesPage";
 import MisReportes from "./components/viewsTaxis/MisReportes";
 import MisAcuerdos from "./components/viewsTaxis/MisAcuerdos";
+import Dashboard from "./components/Dashboard/dashboard";
 
 
 
@@ -38,6 +39,7 @@ function App() {
             <Route path="/incidencias" element={<IncidenciasPage />} />
             <Route path="/acuerdo" element={<AcuerdosPage />} />
             <Route path="/reports" element={<ReportesPage />} />
+            <Route path="/dashbor" element={<Dashboard/>} />
           </Route>
 
           {/* Rutas Protegidas para Taxistas */}
