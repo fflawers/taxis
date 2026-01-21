@@ -13,7 +13,7 @@ import ReportesPage from "./components/views/ReportesPage";
 import MisReportes from "./components/viewsTaxis/MisReportes";
 import MisAcuerdos from "./components/viewsTaxis/MisAcuerdos";
 import Dashboard from "./components/Dashboard/dashboard";
-
+import GestionActivos from "./components/views/GestionActivos"
 
 
 
@@ -35,11 +35,12 @@ function App() {
           <Route element={<ProtectedRoute rolRequerido="admin" />}>
             <Route path="/inicio" element={<Usuarios />} />
             <Route path="/usuarios" element={<UsuariosPage />} />
+            <Route path="/gestion" element={<GestionActivos />} />
             <Route path="/taxis" element={<TaxisPage />} />
             <Route path="/incidencias" element={<IncidenciasPage />} />
             <Route path="/acuerdo" element={<AcuerdosPage />} />
             <Route path="/reports" element={<ReportesPage />} />
-            <Route path="/dashbor" element={<Dashboard/>} />
+            <Route path="/dashbor" element={<Dashboard />} />
           </Route>
 
           {/* Rutas Protegidas para Taxistas */}
