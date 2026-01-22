@@ -329,60 +329,50 @@ app.delete("/usuarios/:id", async (req, res) => {
 
 // ✅ CREATE (insertar taxi) - TRADUCIDO A PG
 app.post("/taxis", async (req, res) => {
-  // Tu variable se llama 'año' (con ñ)
-  const { marca, modelo, año, placa, no_lista } = req.body;
+  const { marca, modelo, año, placa, no_lista, estatus } = req.body;
 
   try {
     // --- CONSULTA 1: Validar el rol del conductor ---
     const userQuery = "SELECT rol FROM usuario WHERE no_lista = $1";
     const { rows: users } = await pool.query(userQuery, [no_lista]);
 
-    if (users.length === 0 || users[0].rol !== 'Taxista') {
-      return res.status(403).json({ message: "Operación no permitida: El conductor no es un taxista." });
+    if (no_lista && (users.length === 0 || users[0].rol !== 'Taxista')) {
+      return res.status(403).json({ message: "El conductor asignado debe ser un taxista." });
     }
 
     // --- CONSULTA 2: Insertar el taxi (si la validación pasó) ---
     const encryptedPlaca = encrypt(placa);
-
-    // La columna en SQL se llama 'anio' (sin ñ), pero tu variable es 'año'
     const insertQuery = `
-            INSERT INTO taxi (marca, modelo, anio, placa, no_lista) 
-            VALUES ($1, $2, $3, $4, $5) 
-            RETURNING economico;
-        `;
+      INSERT INTO taxi (marca, modelo, anio, placa, no_lista, estatus) 
+      VALUES ($1, $2, $3, $4, $5, $6) 
+      RETURNING economico;
+    `;
 
-    // Pasamos 'año' (con ñ) a la consulta
-    const values = [marca, modelo, año, encryptedPlaca, no_lista];
-
+    const values = [marca, modelo, año, encryptedPlaca, no_lista || null, estatus || 'Activo'];
     const { rows } = await pool.query(insertQuery, values);
 
     res.status(201).json({ message: "Taxi creado exitosamente", id: rows[0].economico });
-
   } catch (err) {
     console.error("Error al crear taxi:", err);
-    return res.status(500).json({ message: "Error interno del servidor.", error: err.message });
+    return res.status(500).json({ message: "Error interno.", error: err.message });
   }
 });
 
-// ✅ READ (todos los taxis) - TRADUCIDO A PG
+// ✅ READ (todos los taxis) con ESTATUS y JOIN
 app.get("/taxis", async (req, res) => {
-  // 1. Define la consulta con el JOIN explícito
   const sqlQuery = `
-        SELECT 
-            t.economico, t.marca, t.modelo, t.anio, t.placa, t.no_lista, 
-            u.nombre, u.apellido_p 
-        FROM taxi t
-        LEFT JOIN usuario u ON t.no_lista = u.no_lista
-    `;
+    SELECT 
+      t.economico, t.marca, t.modelo, t.anio, t.placa, t.no_lista, t.estatus,
+      u.nombre, u.apellido_p 
+    FROM taxi t
+    LEFT JOIN usuario u ON t.no_lista = u.no_lista
+  `;
 
   try {
-    // 2. Ejecuta la consulta
     const { rows: data } = await pool.query(sqlQuery);
 
-    // 3. Tu lógica de desencriptación (casi igual, solo cambian los nombres)
     const taxisDesencriptados = data.map(taxi => {
       try {
-        // 'nombre' y 'apellido_p' ahora están al mismo nivel que 'placa'
         const nombre = taxi.nombre ? decrypt(taxi.nombre) : null;
         const apellido = taxi.apellido_p ? decrypt(taxi.apellido_p) : null;
 
@@ -390,9 +380,10 @@ app.get("/taxis", async (req, res) => {
           economico: taxi.economico,
           marca: taxi.marca,
           modelo: taxi.modelo,
-          año: taxi.anio, // La columna de la BD es 'anio', pero la devolvemos como 'año'
+          año: taxi.anio,
           placa: decrypt(taxi.placa),
           no_lista: taxi.no_lista,
+          estatus: taxi.estatus || 'Activo', // Importante para el Frontend
           nombre_conductor: (nombre && apellido) ? `${nombre} ${apellido}` : "Sin asignar"
         };
       } catch (e) {
@@ -400,10 +391,8 @@ app.get("/taxis", async (req, res) => {
       }
     });
     res.json(taxisDesencriptados);
-
   } catch (error) {
-    console.error("Error al obtener taxis:", error);
-    return res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -426,40 +415,35 @@ app.delete("/taxis/:id", async (req, res) => {
   }
 });
 
-// ✅ UPDATE (actualizar taxi) - TRADUCIDO A PG
+// ✅ UPDATE (actualizar taxi) - Soporta Estatus y Reasignación
 app.put("/taxis/:id", async (req, res) => {
-  const { id } = req.params; // ID del taxi a actualizar
-  const { marca, modelo, año, placa, no_lista } = req.body; // Nuevos datos
+  const { id } = req.params;
+  const { marca, modelo, año, placa, no_lista, estatus } = req.body;
 
   try {
-    // --- CONSULTA 1: Validar el rol del conductor ---
-    const userQuery = "SELECT rol FROM usuario WHERE no_lista = $1";
-    const { rows: users } = await pool.query(userQuery, [no_lista]);
-
-    if (users.length === 0 || users[0].rol !== 'Taxista') {
-      return res.status(403).json({ message: "Operación no permitida: El conductor no es un taxista." });
+    // 1. Validar conductor si se está asignando uno
+    if (no_lista) {
+      const userQuery = "SELECT rol FROM usuario WHERE no_lista = $1";
+      const { rows: users } = await pool.query(userQuery, [no_lista]);
+      if (users.length === 0 || users[0].rol !== 'Taxista') {
+        return res.status(403).json({ message: "El conductor debe ser un taxista." });
+      }
     }
 
-    // --- CONSULTA 2: Actualizar el taxi (si la validación pasó) ---
     const encryptedPlaca = encrypt(placa);
-
-    // La columna SQL es 'anio', la variable es 'año'
     const updateQuery = `
-            UPDATE taxi 
-            SET marca = $1, modelo = $2, anio = $3, placa = $4, no_lista = $5 
-            WHERE economico = $6
-        `;
+      UPDATE taxi 
+      SET marca = $1, modelo = $2, anio = $3, placa = $4, no_lista = $5, estatus = $6 
+      WHERE economico = $7
+    `;
 
-    // El 'id' del taxi es el 6to parámetro
-    const values = [marca, modelo, año, encryptedPlaca, no_lista, id];
-
+    const values = [marca, modelo, año, encryptedPlaca, no_lista || null, estatus, id];
     await pool.query(updateQuery, values);
 
     res.json({ message: "Taxi actualizado exitosamente" });
-
   } catch (err) {
     console.error("Error al actualizar taxi:", err);
-    return res.status(500).json({ message: "Error interno del servidor.", error: err.message });
+    res.status(500).json({ message: "Error interno." });
   }
 });
 
