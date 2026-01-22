@@ -71,7 +71,8 @@ app.post("/login", async (req, res) => {
 
 // ✅ CREATE (insertar usuario) - TRADUCIDO A PG
 app.post("/usuarios", async (req, res) => {
-  const { rol, contrasena, nombre, apellido_p, apellido_m, edad, fecha_de_nacimiento } = req.body;
+  // 1. Agregamos 'estatus' a la desestructuración
+  const { rol, contrasena, nombre, apellido_p, apellido_m, edad, fecha_de_nacimiento, estatus } = req.body;
 
   // ✨ --- TU VALIDACIÓN (ESTO QUEDA IGUAL) --- ✨
   if (!rol || !contrasena || !nombre || !apellido_p || !edad || !fecha_de_nacimiento) {
@@ -82,7 +83,6 @@ app.post("/usuarios", async (req, res) => {
   // ✨ --- FIN DE LA VALIDACIÓN --- ✨
 
   try {
-    // Tu lógica de encriptación (ESTO QUEDA IGUAL)
     const hashedPassword = await bcrypt.hash(contrasena, saltRounds);
     const encryptedData = {
       rol,
@@ -99,10 +99,10 @@ app.post("/usuarios", async (req, res) => {
     // --- LÓGICA DE BD (ESTO CAMBIA) ---
     // 1. Define la consulta SQL
     const sqlQuery = `
-      INSERT INTO usuario (rol, contrasena, nombre, apellido_p, apellido_m, edad, fecha_de_nacimiento)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO usuario (rol, contrasena, nombre, apellido_p, apellido_m, edad, fecha_de_nacimiento, estatus)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *;
-    `; // 'RETURNING *' hace lo mismo que el .select() de Supabase
+    `;// 'RETURNING *' hace lo mismo que el .select() de Supabase
 
     // 2. Define el array de valores (¡en orden!)
     const values = [
@@ -112,16 +112,14 @@ app.post("/usuarios", async (req, res) => {
       encryptedData.apellido_p,
       encryptedData.apellido_m,
       encryptedData.edad,
-      encryptedData.fecha_de_nacimiento
+      encryptedData.fecha_de_nacimiento,
+      estatus || 'Activo' // 3. Valor por defecto si no viene en el body
     ];
 
     // 3. Ejecuta la consulta
     //    Usamos 'rows' para obtener los resultados
     const { rows } = await pool.query(sqlQuery, values);
-
-    // 4. Envía la respuesta
     res.status(201).json({ message: "Usuario creado exitosamente", usuario: rows[0] });
-
   } catch (err) { // Este catch ahora atrapa errores de bcrypt, encrypt, y de la BD
     console.error("Error al crear usuario:", err);
     return res.status(500).json({ message: "Error interno del servidor.", error: err.message });
@@ -132,15 +130,13 @@ app.post("/usuarios", async (req, res) => {
 app.get("/usuarios", async (req, res) => {
   // 1. Define la consulta
   const sqlQuery = `
-    SELECT no_lista, rol, nombre, apellido_p, apellido_m, edad, fecha_de_nacimiento 
+    SELECT no_lista, rol, nombre, apellido_p, apellido_m, edad, fecha_de_nacimiento, estatus 
     FROM usuario
   `;
 
   try {
-    // 2. Ejecuta la consulta
     const { rows: results } = await pool.query(sqlQuery);
 
-    // 3. Tu lógica de desencriptación (ESTO QUEDA IGUAL)
     const usuariosDesencriptados = results.map(user => {
       try {
         return {
@@ -150,7 +146,8 @@ app.get("/usuarios", async (req, res) => {
           apellido_p: decrypt(user.apellido_p),
           apellido_m: decrypt(user.apellido_m),
           edad: parseInt(decrypt(user.edad), 10),
-          fecha_de_nacimiento: decrypt(user.fecha_de_nacimiento)
+          fecha_de_nacimiento: decrypt(user.fecha_de_nacimiento),
+          estatus: user.estatus
         };
       }
       catch (e) {
@@ -259,7 +256,7 @@ app.get("/usuarios/:id", async (req, res) => {
 // ✅ UPDATE (actualizar usuario) - TRADUCIDO A PG (Versión Dinámica)
 app.put("/usuarios/:id", async (req, res) => {
   const { id } = req.params;
-  const { rol, contrasena, nombre, apellido_p, apellido_m, edad, fecha_de_nacimiento } = req.body;
+  const { rol, contrasena, nombre, apellido_p, apellido_m, edad, fecha_de_nacimiento, estatus } = req.body;
 
   try {
     // 1. Prepara los campos y valores
@@ -270,7 +267,8 @@ app.put("/usuarios/:id", async (req, res) => {
       apellido_p: encrypt(apellido_p),
       apellido_m: encrypt(apellido_m || ''),
       edad: encrypt(edad.toString()),
-      fecha_de_nacimiento: encrypt(fecha_de_nacimiento)
+      fecha_de_nacimiento: encrypt(fecha_de_nacimiento),
+      estatus: estatus // 2. Nuevo campo soportado
     };
 
     // 2. Añade la contraseña solo si se proporcionó
