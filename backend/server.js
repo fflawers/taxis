@@ -488,31 +488,29 @@ app.post("/incidencias", async (req, res) => {
 // ✅ READ (todas las incidencias) - TRADUCIDO A PG (Con JOIN)
 app.get("/incidencias", async (req, res) => {
   try {
-    // 1. Define la consulta con el JOIN explícito (CORREGIDO)
-    const sqlQuery = `SELECT 
-    i.id_incidencia, i.descripcion, i.observaciones, i.no_lista_conductor, 
-    u.nombre, u.apellido_p
-    FROM incidencia i
-    LEFT JOIN usuario u ON i.no_lista_conductor = u.no_lista`;
+    const sqlQuery = `
+      SELECT 
+        i.id_incidencia,
+        COALESCE(i.descripcion, '')   AS descripcion,
+        COALESCE(i.observaciones, '') AS observaciones,
+        i.estado,
+        i.no_lista_conductor,
+        u.nombre,
+        u.apellido_p
+      FROM incidencia i
+      LEFT JOIN usuario u ON i.no_lista_conductor = u.no_lista
+      WHERE i.estado = 'PENDIENTE'
+    `;
 
-    // 2. Ejecuta la consulta
-    const { rows: incidencias } = await pool.query(sqlQuery);
+    const { rows } = await pool.query(sqlQuery);
 
-    if (!incidencias || incidencias.length === 0) {
-      return res.json([]);
-    }
-
-    // 3. Tu lógica de desencriptación (CORREGIDO)
-    const incidenciasCompletas = incidencias.map(inc => {
+    const incidenciasCompletas = rows.map(inc => {
       let nombreConductor = 'Sin asignar';
 
       if (inc.nombre) {
         try {
-          const nombre = decrypt(inc.nombre);
-          const apellido = decrypt(inc.apellido_p);
-          nombreConductor = `${nombre} ${apellido}`;
-        } catch (e) {
-          console.error(`Fallo al desencriptar datos para la incidencia ${inc.id_incidencia}:`, e);
+          nombreConductor = `${decrypt(inc.nombre)} ${decrypt(inc.apellido_p)}`;
+        } catch {
           nombreConductor = 'Error de datos';
         }
       }
@@ -521,7 +519,8 @@ app.get("/incidencias", async (req, res) => {
         id_incidencia: inc.id_incidencia,
         descripcion: inc.descripcion,
         observaciones: inc.observaciones,
-        no_lista: inc.no_lista_conductor, /* ⬅️ Lee la columna correcta */
+        estado: inc.estado,
+        no_lista: inc.no_lista_conductor,
         nombre_conductor: nombreConductor,
       };
     });
@@ -530,9 +529,10 @@ app.get("/incidencias", async (req, res) => {
 
   } catch (error) {
     console.error("Error al obtener incidencias:", error);
-    return res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
+
 
 // ✅ UPDATE (actualizar incidencia con conductor) - TRADUCIDO A PG
 app.put("/incidencias/:id", async (req, res) => {
@@ -592,6 +592,40 @@ app.delete("/incidencias/:id", async (req, res) => {
     return res.status(500).json({ message: "Error interno.", error: error.message });
   }
 });
+
+app.post("/incidencias/:id/resolver", async (req, res) => {
+  const { id } = req.params;
+  const { descripcion } = req.body;
+
+  try {
+    // 1️⃣ Crear acuerdo
+    const acuerdoQuery = `
+      INSERT INTO acuerdo (descripcion, id_incidencia)
+      VALUES ($1, $2)
+      RETURNING id_acuerdo
+    `;
+    const { rows } = await pool.query(acuerdoQuery, [
+      descripcion || '',
+      id
+    ]);
+
+    // 2️⃣ Marcar incidencia como RESUELTA
+    await pool.query(
+      "UPDATE incidencia SET estado = 'RESUELTA' WHERE id_incidencia = $1",
+      [id]
+    );
+
+    res.json({
+      message: "Incidencia resuelta",
+      id_acuerdo: rows[0].id_acuerdo
+    });
+
+  } catch (err) {
+    console.error("Error al resolver incidencia:", err);
+    res.status(500).json({ message: "Error interno" });
+  }
+});
+
 // ===============================================
 // 🚀 ENDPOINTS PARA LA TABLA ACUERDO
 // ===============================================

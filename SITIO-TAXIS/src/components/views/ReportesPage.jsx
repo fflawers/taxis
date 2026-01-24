@@ -8,7 +8,7 @@ function ReportesPage() {
   const [taxis, setTaxis] = useState([]);
   const [incidencias, setIncidencias] = useState([]);
   const [acuerdos, setAcuerdos] = useState([]);
-  
+
   // ✅ CORREGIDO: Claves en minúsculas
   const [form, setForm] = useState({
     no_lista: "", economico: "", fecha_reporte: "",
@@ -67,13 +67,13 @@ function ReportesPage() {
   const handleEditClick = (reporte) => {
     setReporteAEditar(reporte);
     const fechaFormateada = reporte.fecha_reporte ? new Date(reporte.fecha_reporte).toISOString().split('T')[0] : '';
-    setFormEdicion({ 
-        no_lista: reporte.no_lista || '',
-        economico: reporte.economico || '',
-        fecha_reporte: fechaFormateada,
-        observaciones: reporte.observaciones || '',
-        id_incidencia: reporte.id_incidencia || '',
-        id_acuerdo: reporte.id_acuerdo || '',
+    setFormEdicion({
+      no_lista: reporte.no_lista || '',
+      economico: reporte.economico || '',
+      fecha_reporte: fechaFormateada,
+      observaciones: reporte.observaciones || '',
+      id_incidencia: reporte.id_incidencia || '',
+      id_acuerdo: reporte.id_acuerdo || '',
     });
   };
 
@@ -93,7 +93,7 @@ function ReportesPage() {
       fetchData();
     } catch (error) { console.error("Error al actualizar reporte:", error); alert(`Error: ${error.message}`); }
   };
-  
+
   return (
     <div>
       <Navbar />

@@ -22,34 +22,37 @@ function Usuarios() {
   return (
     <div>
       <Navbar />
-      <h1 className="container mt-4">Hola, {user?.nombre} esta es la lista de usuarios activos:</h1>
+      <h1 className="container mt-4 text-center">Hola, {user?.nombre}</h1>
 
-      <div className="col-12 mx-auto justify-content-center">
-        <Link to="/inicio" className="mx-0 text-center navbar-brand">
-          <HomeIcon className="w-8 h-8 text-black" />
+      <div className="d-flex justify-content-center align-items-center gap-4 my-4">
+        <Link to="/gestion" className="mx-0 text-center navbar-brand">
+          <HomeIcon color="#000000" width={90} height={90} />
+          <p>Gestion de usuarios</p>
         </Link>
 
 
-        <Link to="/usuarios" className="mx-0 text-center navbar-brand">
-          <UserIcon color="#000000" width={32} height={32} />
+        <Link to="/reporte" className="mx-0 text-center navbar-brand">
+          <UserIcon color="#000000" width={90} height={90} />
+          <p>Reportes de usuarios</p>
         </Link>
 
 
-        <Link to="/incidencias" className="mx-0 text-center navbar-brand">
-          <SearchIcon color="#000000" width={32} height={32} />
+        <Link to="/dashbor" className="mx-0 text-center navbar-brand">
+          <SearchIcon color="#000000" width={90} height={90} />
+          <p>Dashboard de usuarios</p>
         </Link>
 
 
 
 
       </div>
-      <ul className="container fw-bolder my-4">
+      {/* <ul className="container fw-bolder my-4">
         {usuarios.map(u => (
           <li key={u.no_lista}>
             {u.nombre} {u.apellido_P} {u.apellido_M} - {u.rol}
           </li>
         ))}
-      </ul>
+      </ul> */}
       <IndexFooter />
     </div>
   );
