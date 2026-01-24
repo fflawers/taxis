@@ -487,7 +487,17 @@ app.post("/incidencias", async (req, res) => {
 
 // ✅ READ (todas las incidencias) - TRADUCIDO A PG (Con JOIN)
 app.get("/incidencias", async (req, res) => {
+  const { estado } = req.query; // 👈 NUEVO
+
   try {
+    let where = '';
+    const values = [];
+
+    if (estado) {
+      where = 'WHERE i.estado = $1';
+      values.push(estado);
+    }
+
     const sqlQuery = `
       SELECT 
         i.id_incidencia,
@@ -499,14 +509,14 @@ app.get("/incidencias", async (req, res) => {
         u.apellido_p
       FROM incidencia i
       LEFT JOIN usuario u ON i.no_lista_conductor = u.no_lista
-      WHERE i.estado = 'PENDIENTE'
+      ${where}
+      ORDER BY i.id_incidencia DESC
     `;
 
-    const { rows } = await pool.query(sqlQuery);
+    const { rows } = await pool.query(sqlQuery, values);
 
     const incidenciasCompletas = rows.map(inc => {
       let nombreConductor = 'Sin asignar';
-
       if (inc.nombre) {
         try {
           nombreConductor = `${decrypt(inc.nombre)} ${decrypt(inc.apellido_p)}`;
@@ -532,6 +542,7 @@ app.get("/incidencias", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 
 // ✅ UPDATE (actualizar incidencia con conductor) - TRADUCIDO A PG

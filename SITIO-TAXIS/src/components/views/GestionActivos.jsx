@@ -146,10 +146,10 @@ function GestionActivos() {
 
                 <ul className="nav nav-pills justify-content-center mb-4 p-2 bg-light rounded shadow-sm">
                     <li className="nav-item">
-                        <button className={`nav-link ${tabActual === "usuarios" ? "active" : ""}`} onClick={() => setTabActual("usuarios")}>👥 Personal</button>
+                        <button className={`buttonGAs p-2 mx-3 ${tabActual === "usuarios" ? "active" : ""}`} onClick={() => setTabActual("usuarios")}>👥 Personal</button>
                     </li>
                     <li className="nav-item">
-                        <button className={`nav-link ${tabActual === "taxis" ? "active" : ""}`} onClick={() => setTabActual("taxis")}>🚖 Flota</button>
+                        <button className={`buttonGAs p-2 mx-3 ${tabActual === "taxis" ? "active" : ""}`} onClick={() => setTabActual("taxis")}>🚖 Flota</button>
                     </li>
                 </ul>
 

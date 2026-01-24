@@ -3,13 +3,16 @@ html {
 }
 
 body {
-    
-    color: #2C3E50 !important;
-    font-family: Montserrat, serif;
+
+  color: #2C3E50 !important;
+  font-family: Montserrat, serif;
 }
 
-input, button, select, textarea {
-  font-family: inherit;
+input,
+button,
+select,
+textarea {
+  font-family: inherit;
 }
 
 
@@ -22,14 +25,17 @@ input, button, select, textarea {
   height: 650px;
   overflow: hidden;
   background-color: #F4D35E;
+
   @media (max-width: 1024px) {
     height: 500px;
     max-height: 900px;
   }
+
   @media (max-width: 768px) {
     height: 400px;
     max-height: 750px;
   }
+
   @media (max-width: 575px) {
     height: 360px;
     max-height: 360px;
@@ -38,9 +44,9 @@ input, button, select, textarea {
 
 .bgImgBanner {
   width: 100%;
-    height: auto;
-    position: absolute;
-    top: -9%;
+  height: auto;
+  position: absolute;
+  top: -9%;
 
   @media (max-width: 1024px) {
     width: 200%;
@@ -72,8 +78,8 @@ input, button, select, textarea {
 }
 
 .lusitoIMgR {
-    height: 250px;
-    
+  height: 250px;
+
 
   @media (max-width: 465px) {
     height: 40%;
@@ -90,7 +96,7 @@ input, button, select, textarea {
 }
 
 .titleI {
-  text-shadow: 5px 5px 10px rgba(0,0,0,0.5);
+  text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);
   font-weight: 600;
   font-size: 1.6em;
   margin-top: 5%;
@@ -112,16 +118,18 @@ input, button, select, textarea {
   text-align: center;
   width: 100%;
 }
-.button-eye{
-    border: 2px solid #BDC3C7;
-    border-radius: 15px;
-    color: #2C3E50;
-    text-align: center;
-    border-radius: 20px;
-    position: absolute;
-    height: 42px;
-    width: 45px !important;
+
+.button-eye {
+  border: 2px solid #BDC3C7;
+  border-radius: 15px;
+  color: #2C3E50;
+  text-align: center;
+  border-radius: 20px;
+  position: absolute;
+  height: 42px;
+  width: 45px !important;
 }
+
 .text-general {
   font-size: 1em;
   font-family: 'Montserrat', sans-serif;
@@ -148,6 +156,7 @@ input, button, select, textarea {
 
 .borderB {
   border-left: 1px #009D8E solid;
+
   @media (max-width: 992px) {
     border-left: none;
     border-top: 1px #009D8E solid;
@@ -172,6 +181,7 @@ input, button, select, textarea {
   font-weight: 400;
   width: 8em;
 }
+
 .btnModal:hover {
   color: #fff !important;
   background-color: #ff4869;
@@ -188,10 +198,11 @@ input, button, select, textarea {
 .contentModal {
   font-size: 1.2em;
 }
+
 .modal-content {
   position: relative !important;
-  display: -ms-flexbox  !important;
-  display: flex  !important;
+  display: -ms-flexbox !important;
+  display: flex !important;
   -ms-flex-direction: column !important;
   flex-direction: column !important;
   width: 100% !important;
@@ -199,7 +210,7 @@ input, button, select, textarea {
   background-color: #fff !important;
   background-clip: padding-box !important;
   border: 1px solid rgba(0, 0, 0, .2) !important;
-  border-radius: 40px  !important;
+  border-radius: 40px !important;
   outline: 0 !important;
 }
 
@@ -207,12 +218,12 @@ input, button, select, textarea {
 
 /******************************** Navbar **********************************/
 .glass_nav {
-    background: #ffffff3b;
-    box-shadow: 0 4px 30px #0000001a;
-    backdrop-filter: blur(4.7px);
-    -webkit-backdrop-filter: blur(4.7px);
-    padding-top: 0;
-    padding-bottom: 0;
+  background: #ffffff3b;
+  box-shadow: 0 4px 30px #0000001a;
+  backdrop-filter: blur(4.7px);
+  -webkit-backdrop-filter: blur(4.7px);
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 /* .navbar-toggler {
@@ -226,92 +237,114 @@ input, button, select, textarea {
     transition: var(--bs-navbar-toggler-transition);
 } */
 .backgroundResponsive {
-    background-color: #F4D35E;
-    border-radius: 15px;
+  background-color: #F4D35E;
+  border-radius: 15px;
 }
-.imgLogoFekaTaxi{
-    width: 60% !important;
+
+.imgLogoFekaTaxi {
+  width: 60% !important;
 }
+
 .nav-link {
-    color: #5C3D2E !important;
+  color: #000000 !important;
 }
 
-.nabvar-1{
- margin-bottom: 20px;
- border-bottom: 1px solid #ccc;
- padding-bottom: 10px;
-}
-.text-nav{
-    color: #000000;
-    text-decoration: none;
-    margin-right: 20px;
-    font-size: 1em;
-    font-weight: 700;
-    transition: transform 0.5s cubic-bezier(.25, .1, .25, 1) !important;
+.nav-link:hover {
+  transform: scale(1.05);
+  font-weight: 700 !important;
 }
 
-.text-nav:hover{
-color: #000000;
-font-size: 1.1em;
+.buttonGAs {
+  border-radius: 10px;
+  border: none;
+  background-color: #BDC3C7;
+
+}
+
+.buttonGAs:hover {
+  transform: scale(1.05);
+  font-weight: 700 !important;
+  background-color: #BDC3C7;
+}
+
+
+.nabvar-1 {
+  margin-bottom: 20px;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 10px;
+}
+
+.text-nav {
+  color: #000000;
+  text-decoration: none;
+  margin-right: 20px;
+  font-size: 1em;
+  font-weight: 700;
+  transition: transform 0.5s cubic-bezier(.25, .1, .25, 1) !important;
+}
+
+.text-nav:hover {
+  color: #000000;
+  font-size: 1.1em;
 }
 
 
 
 /******************************** GENERALS **********************************/
 
-.btn-red{
-    background-color: #f86f68 !important;
-    border-radius: 10px !important;
-    border: none;
-    color: #fff;
-    font-weight: 500;
-    font-size: 15px !important;
-    width: 50%;
-    padding: .2em 3em;
+.btn-red {
+  background-color: #f86f68 !important;
+  border-radius: 10px !important;
+  border: none;
+  color: #fff;
+  font-weight: 500;
+  font-size: 15px !important;
+  width: 50%;
+  padding: .2em 3em;
 }
 
 .btn-green {
-    font-size: 15px !important;
-    background-color: #06bc50 !important;
-    margin: 10px  !important;
-    border-radius: 10px;
-    font-weight: 500 !important;
-    color: #fff !important;
-    width: 70%;
-    border: none;
-    padding: 0em 0em !important;
-    height: 1.7em;
+  font-size: 15px !important;
+  background-color: #06bc50 !important;
+  margin: 10px !important;
+  border-radius: 10px;
+  font-weight: 500 !important;
+  color: #fff !important;
+  width: 70%;
+  border: none;
+  padding: 0em 0em !important;
+  height: 1.7em;
 }
 
 
 
 .btn-greenAP {
-    font-size: 15px !important;
-    background-color: #06bc50 !important;
-    margin: 10px  !important;
-    border-radius: 10px;
-    font-weight: 500 !important;
-    color: #fff !important;
-    width: 70%;
-    border: none;
-    padding: 0em 0em !important;
-    height: 1.7em;
-    margin-top: 2rem!important;
+  font-size: 15px !important;
+  background-color: #06bc50 !important;
+  margin: 10px !important;
+  border-radius: 10px;
+  font-weight: 500 !important;
+  color: #fff !important;
+  width: 70%;
+  border: none;
+  padding: 0em 0em !important;
+  height: 1.7em;
+  margin-top: 2rem !important;
 }
 
 
 
 .btn-green-general {
-    font-size: 15px !important;
-    background-color: #06bc50 !important;
-    margin: 10px  !important;
-    border-radius: 10px;
-    font-weight: 500 !important;
-    color: #fff !important;
-    width: 40%;
-    border: none;
-    padding: 0em 0em !important;
-    height: 2.5em;
+  font-size: 15px !important;
+  background-color: #06bc50 !important;
+  margin: 10px !important;
+  border-radius: 10px;
+  font-weight: 500 !important;
+  color: #fff !important;
+  width: 40%;
+  border: none;
+  padding: 0em 0em !important;
+  height: 2.5em;
 }
 
 /******************************** ReportesPage **********************************/
@@ -321,19 +354,19 @@ font-size: 1.1em;
 /******************************** TaxisPage **********************************/
 /* Estilo base del contenedor del input */
 .inputTP {
-     color: #707070 !important;
-    border: 1px solid #F4D35E !important;
-    border-radius: 8px !important;
-    font-size: 14px !important;
-    width: 100% !important;
-    margin: 10px  !important;
-    height: 1.7em;
-    text-align: justify ;
-    padding-left: 15px;
+  color: #707070 !important;
+  border: 1px solid #F4D35E !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  width: 100% !important;
+  margin: 10px !important;
+  height: 1.7em;
+  text-align: justify;
+  padding-left: 15px;
 }
 
-.text-taxi{
-font-size: 1.5em;
+.text-taxi {
+  font-size: 1.5em;
 }
 
 .table td,
@@ -351,7 +384,7 @@ font-size: 1.5em;
 
 
 /******************************** UsuariosPage **********************************/
-.textUP{
+.textUP {
   font-size: 1.2em;
   font-weight: 500;
   color: #707070;
@@ -375,6 +408,7 @@ font-size: 1.5em;
     list-style-type: none;
     margin: 5px 0;
     font-weight: 200;
+
     @media only screen and (max-width: 920px) {
       font-size: 12px !important;
       font-weight: 300 !important;
@@ -397,6 +431,7 @@ font-size: 1.5em;
   color: white !important;
   list-style-type: none;
   font-size: 20px;
+
   @media only screen and (max-width: 920px) {
     font-size: 30px !important;
   }
@@ -430,10 +465,7 @@ font-size: 1.5em;
   color: white;
 }
 
-.nav-link:hover {
-  transform: scale(1.05);
-  font-weight: 700 !important;
-}
+
 
 .textCopy {
   font-weight: 200;

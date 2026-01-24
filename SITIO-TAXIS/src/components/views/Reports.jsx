@@ -4,9 +4,19 @@ import IndexFooter from "../Footers/IndexFooter";
 
 function CentroControlAutomatizado() {
     const [tab, setTab] = useState("reportes");
-    const [data, setData] = useState({ reportes: [], incidencias: [], acuerdos: [], taxistas: [], taxis: [] });
+    const [data, setData] = useState({
+        reportes: [],
+        incidencias: [],
+        incidenciasResueltas: [],
+        acuerdos: [],
+        taxistas: [],
+        taxis: []
+    });
+
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState(""); // 🔍 NUEVO: Estado para búsqueda
+
+
 
     const initialForm = {
         no_lista: "", economico: "", fecha_reporte: new Date().toISOString().split('T')[0],
@@ -17,17 +27,31 @@ function CentroControlAutomatizado() {
     const fetchData = async () => {
         try {
             const url = import.meta.env.VITE_API_URL;
-            const [rep, inc, acu, taxist, tax] = await Promise.all([
-                fetch(`${url}/reportes`), fetch(`${url}/incidencias`),
-                fetch(`${url}/acuerdos`), fetch(`${url}/usuarios/taxistas`), fetch(`${url}/taxis`)
+
+            const [rep, incPend, incRes, acu, taxist, tax] = await Promise.all([
+                fetch(`${url}/reportes`),
+                fetch(`${url}/incidencias?estado=PENDIENTE`),
+                fetch(`${url}/incidencias?estado=RESUELTA`),
+                fetch(`${url}/acuerdos`),
+                fetch(`${url}/usuarios/taxistas`),
+                fetch(`${url}/taxis`)
             ]);
+
             setData({
-                reportes: await rep.json(), incidencias: await inc.json(),
-                acuerdos: await acu.json(), taxistas: await taxist.json(), taxis: await tax.json()
+                reportes: await rep.json(),
+                incidencias: await incPend.json(),
+                incidenciasResueltas: await incRes.json(),
+                acuerdos: await acu.json(),
+                taxistas: await taxist.json(),
+                taxis: await tax.json()
             });
+
             setLoading(false);
-        } catch (e) { console.error("Error de carga", e); }
+        } catch (e) {
+            console.error("Error de carga", e);
+        }
     };
+
 
     useEffect(() => { fetchData(); }, []);
 
@@ -140,12 +164,31 @@ function CentroControlAutomatizado() {
 
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <div className="btn-group shadow-sm">
-                        <button className={`btn ${tab === 'reportes' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setTab('reportes')}>Reportes Rápidos</button>
-                        <button className={`btn ${tab === 'incidencias' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setTab('incidencias')}>Historial de Fallas</button>
+                        <button
+                            className={`btn ${tab === 'reportes' ? 'btn-primary' : 'btn-outline-primary'}`}
+                            onClick={() => setTab('reportes')}
+                        >
+                            Reportes Rápidos
+                        </button>
+
+                        <button
+                            className={`btn ${tab === 'incidencias' ? 'btn-primary' : 'btn-outline-primary'}`}
+                            onClick={() => setTab('incidencias')}
+                        >
+                            Pendientes
+                        </button>
+
+                        <button
+                            className={`btn ${tab === 'resueltas' ? 'btn-primary' : 'btn-outline-primary'}`}
+                            onClick={() => setTab('resueltas')}
+                        >
+                            Resueltas
+                        </button>
                     </div>
+
                     {/* 🔍 Barra de Búsqueda */}
                     <div className="w-25">
-                        <input type="text" className="form-control" placeholder="🔍 Buscar por nombre o taxi..."
+                        <input type="text" className="form-control" placeholder="🔍 Buscar por nombre..."
                             value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                     </div>
                 </div>
@@ -185,30 +228,48 @@ function CentroControlAutomatizado() {
                     <table className="table table-hover bg-white shadow-sm rounded overflow-hidden">
                         <thead className="table-dark">
                             {tab === 'reportes' ? (
-                                <tr><th>Fecha</th><th>Conductor</th><th>Unidad</th><th>Incidencia</th><th>Acciones</th></tr>
+                                // <tr><th>Fecha</th><th>Conductor</th><th>Unidad</th><th>Incidencia</th><th>Acciones</th></tr>
+                                <></>
                             ) : (
                                 <tr><th>ID</th><th>Descripción</th><th>Conductor</th><th>Estado</th><th>Acciones</th></tr>
                             )}
                         </thead>
                         <tbody className="align-middle">
-                            {tab === 'reportes' ? filteredData(data.reportes, 'reportes').map(r => (
-                                <tr key={r.id_reporte}>
-                                    <td>{new Date(r.fecha_reporte).toLocaleDateString()}</td>
-                                    <td>{r.nombre_conductor}</td>
-                                    <td className="fw-bold text-success">#{r.economico}</td>
-                                    <td><span className="badge rounded-pill bg-warning text-dark">{r.incidencia_descripcion || 'N/A'}</span></td>
-                                    <td><button className="btn btn-sm btn-outline-danger border-0">🗑️</button></td>
-                                </tr>
-                            )) : filteredData(data.incidencias, 'incidencias').map(i => (
-                                <tr key={i.id_incidencia}>
-                                    <td>#{i.id_incidencia}</td>
-                                    <td>{i.descripcion}</td>
-                                    <td>{i.nombre_conductor}</td>
-                                    <td><span className="badge bg-info">En proceso</span></td>
-                                    <td><button className="btn btn-sm btn-success" onClick={() => autoResolver(i)}>✅ Resolver</button></td>
-                                </tr>
-                            ))}
+                            {tab === 'incidencias' &&
+                                filteredData(data.incidencias, 'incidencias').map(i => (
+                                    <tr key={i.id_incidencia}>
+                                        <td>#{i.id_incidencia}</td>
+                                        <td>{i.descripcion}</td>
+                                        <td>{i.nombre_conductor}</td>
+                                        <td>
+                                            <span className="badge bg-info">{i.estado}</span>
+                                        </td>
+                                        <td>
+                                            <button className="btn btn-sm btn-success" onClick={() => autoResolver(i)}>
+                                                ✅ Resolver
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+
+                            {tab === 'resueltas' &&
+                                filteredData(data.incidenciasResueltas, 'incidencias').map(i => (
+                                    <tr key={i.id_incidencia}>
+                                        <td>#{i.id_incidencia}</td>
+                                        <td>{i.descripcion}</td>
+                                        <td>{i.nombre_conductor}</td>
+                                        <td>
+                                            <span className="badge bg-success">{i.estado}</span>
+                                        </td>
+                                        <td>
+                                            <span className="text-muted">✔ Cerrada</span>
+                                        </td>
+                                    </tr>
+                                ))}
+
                         </tbody>
+
+
                     </table>
                 </div>
             </div>
