@@ -1174,6 +1174,29 @@ app.get("/ingresos/taxista/:id", async (req, res) => {
   }
 });
 
+app.get("/dashboard/ingresos-mensuales", async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        t.nombre,
+        COALESCE(SUM(i.numero_viajes), 0) AS total_viajes,
+        COALESCE(SUM(i.monto), 0) AS total_ingreso,
+        COALESCE(SUM(i.kilometraje_recorrido), 0) AS total_km
+      FROM ingresos i
+      JOIN taxista t ON i.no_lista = t.no_lista
+      GROUP BY t.nombre
+      ORDER BY total_ingreso DESC
+    `;
+
+    const { rows } = await pool.query(query);
+    res.json(rows);
+  } catch (error) {
+    console.error("Error al obtener ingresos mensuales:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
 
 
 // ===============================================
