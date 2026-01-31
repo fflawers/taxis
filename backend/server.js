@@ -1149,9 +1149,9 @@ app.get("/ingresos/taxista/:id", async (req, res) => {
   try {
     const query = `
       SELECT
-        SUM(numero_viajes) AS total_viajes,
-        SUM(monto) AS ingresos_totales,
-        SUM(kilometraje_recorrido) AS km_totales
+        COALESCE(SUM(numero_viajes), 0) AS total_viajes,
+        COALESCE(SUM(monto), 0) AS ingresos_totales,
+        COALESCE(SUM(kilometraje_recorrido), 0) AS km_totales
       FROM ingresos
       WHERE no_lista = $1
       AND EXTRACT(MONTH FROM fecha) = $2
@@ -1164,9 +1164,11 @@ app.get("/ingresos/taxista/:id", async (req, res) => {
     res.json(rows[0]);
 
   } catch (error) {
+    console.error("Error al obtener resumen de ingresos:", error);
     res.status(500).json({ error: error.message });
   }
 });
+
 
 
 // ===============================================
