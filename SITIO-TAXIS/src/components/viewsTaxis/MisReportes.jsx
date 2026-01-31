@@ -31,7 +31,7 @@ function MisReportes() {
         <h4>Resumen Mensual</h4>
         <p>Viajes: {resumen?.total_viajes}</p>
         <p>Kilómetros: {resumen?.km_totales} km</p>
-        <p><strong>Ingresos: ${resumen?.ingresos_totales} MXN</strong></p>
+        <p><strong>Ingresos: ${Number(resumen?.ingresos_totales || 0).toFixed(2)} MXN</strong></p>
       </div>
 
       <div className="container mt-4">

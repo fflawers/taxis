@@ -1144,7 +1144,12 @@ app.post("/ingresos", async (req, res) => {
 
 app.get("/ingresos/taxista/:id", async (req, res) => {
   const taxistaId = req.params.id;
-  const { mes, anio } = req.query;
+  const mes = parseInt(req.query.mes, 10);
+  const anio = parseInt(req.query.anio, 10);
+
+  if (!mes || !anio) {
+    return res.status(400).json({ error: "Mes y año inválidos" });
+  }
 
   try {
     const query = `
