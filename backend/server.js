@@ -1196,15 +1196,14 @@ app.get("/dashboard/ingresos-mensuales", async (req, res) => {
   }
 });
 
-// GET /dashboard/viajes-top
 app.get("/dashboard/viajes-top", async (req, res) => {
   try {
     const query = `
-      SELECT t.nombre, SUM(i.numero_viajes) AS total_viajes
+      SELECT u.nombre, SUM(i.numero_viajes) AS total_viajes
       FROM ingresos i
-      JOIN taxistas t ON t.no_lista = i.no_lista
+      JOIN usuario u ON u.no_lista = i.no_lista
       WHERE i.fecha >= NOW() - INTERVAL '30 days'
-      GROUP BY t.nombre
+      GROUP BY u.nombre
       ORDER BY SUM(i.numero_viajes) DESC
       LIMIT 10
     `;
@@ -1217,19 +1216,19 @@ app.get("/dashboard/viajes-top", async (req, res) => {
 });
 
 
-// GET /dashboard/ingresos-mensuales
+
 app.get("/dashboard/ingresos-mensuales", async (req, res) => {
   try {
     const query = `
       SELECT 
-        t.nombre,
+        u.nombre,
         SUM(i.numero_viajes) AS total_viajes,
         SUM(i.kilometraje_recorrido) AS total_km,
         SUM(i.monto) AS total_ingreso
       FROM ingresos i
-      JOIN taxistas t ON t.no_lista = i.no_lista
+      JOIN usuario u ON u.no_lista = i.no_lista
       WHERE DATE_TRUNC('month', i.fecha) = DATE_TRUNC('month', NOW())
-      GROUP BY t.nombre
+      GROUP BY u.nombre
       ORDER BY SUM(i.monto) DESC
     `;
     const { rows } = await pool.query(query);
