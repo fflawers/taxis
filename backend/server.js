@@ -1056,30 +1056,35 @@ app.get("/dashboard/analisis/:modulo", async (req, res) => {
 });
 
 app.post("/ingresos", async (req, res) => {
-  const {
-    no_lista,
-    kilometraje_recorrido,
-    numero_viajes,
-    fecha
-  } = req.body;
-
   try {
-    // 🔐 TARIFA FIJA REAL (MXN por km)
+    const { no_lista, kilometraje_recorrido, numero_viajes, fecha } = req.body;
+
+    if (!no_lista || !kilometraje_recorrido || !numero_viajes || !fecha) {
+      return res.status(400).json({ error: "Faltan datos obligatorios" });
+    }
+
+    // 🔐 TARIFA FIJA POR KM (MXN)
     const TARIFA_REAL = 25;
     const monto = kilometraje_recorrido * TARIFA_REAL;
 
-    // 🔍 1. Verificar si ya existe ingreso del mismo mes
+    // 🔹 Convertir fecha a objeto
+    const fechaObj = new Date(fecha);
+    const anio = fechaObj.getFullYear();
+    const mes = fechaObj.getMonth() + 1; // getMonth() va de 0 a 11
+
+    // 🔍 Verificar si ya hay registro del mismo mes
     const checkQuery = `
       SELECT id_ingreso
       FROM ingresos
       WHERE no_lista = $1
-      AND DATE_TRUNC('month', fecha) = DATE_TRUNC('month', $2)
+      AND anio = $2
+      AND mes = $3
     `;
 
-    const checkResult = await pool.query(checkQuery, [no_lista, fecha]);
+    const checkResult = await pool.query(checkQuery, [no_lista, anio, mes]);
 
-    // 🔄 2. Si existe → UPDATE (acumula)
     if (checkResult.rows.length > 0) {
+      // 🔄 Si ya existe → actualizar acumulando valores
       const updateQuery = `
         UPDATE ingresos
         SET
@@ -1094,13 +1099,13 @@ app.post("/ingresos", async (req, res) => {
         numero_viajes,
         kilometraje_recorrido,
         monto,
-        checkResult.rows[0].id_ingreso
+        checkResult.rows[0].id_ingreso,
       ]);
 
       return res.json(rows[0]);
     }
 
-    // ➕ 3. Si NO existe → INSERT
+    // ➕ Si no existe → insertar nuevo registro
     const insertQuery = `
       INSERT INTO ingresos (
         no_lista,
@@ -1108,9 +1113,11 @@ app.post("/ingresos", async (req, res) => {
         numero_viajes,
         fecha,
         kilometraje_recorrido,
-        tarifa_aplicada
+        tarifa_aplicada,
+        anio,
+        mes
       )
-      VALUES ($1, $2, $3, $4, $5, $6)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `;
 
@@ -1118,9 +1125,11 @@ app.post("/ingresos", async (req, res) => {
       no_lista,
       monto,
       numero_viajes,
-      fecha,
+      fechaObj,
       kilometraje_recorrido,
-      TARIFA_REAL
+      TARIFA_REAL,
+      anio,
+      mes,
     ]);
 
     res.json(rows[0]);
@@ -1130,6 +1139,7 @@ app.post("/ingresos", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 
 app.get("/ingresos/taxista/:id", async (req, res) => {
