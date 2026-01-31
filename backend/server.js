@@ -1060,14 +1060,48 @@ app.post("/ingresos", async (req, res) => {
     no_lista,
     kilometraje_recorrido,
     numero_viajes,
-    tarifa_aplicada,
     fecha
   } = req.body;
 
-  const monto = kilometraje_recorrido * tarifa_aplicada;
-
   try {
-    const query = `
+    // 🔐 TARIFA FIJA REAL (MXN por km)
+    const TARIFA_REAL = 25;
+    const monto = kilometraje_recorrido * TARIFA_REAL;
+
+    // 🔍 1. Verificar si ya existe ingreso del mismo mes
+    const checkQuery = `
+      SELECT id_ingreso
+      FROM ingresos
+      WHERE no_lista = $1
+      AND DATE_TRUNC('month', fecha) = DATE_TRUNC('month', $2)
+    `;
+
+    const checkResult = await pool.query(checkQuery, [no_lista, fecha]);
+
+    // 🔄 2. Si existe → UPDATE (acumula)
+    if (checkResult.rows.length > 0) {
+      const updateQuery = `
+        UPDATE ingresos
+        SET
+          numero_viajes = numero_viajes + $1,
+          kilometraje_recorrido = kilometraje_recorrido + $2,
+          monto = monto + $3
+        WHERE id_ingreso = $4
+        RETURNING *
+      `;
+
+      const { rows } = await pool.query(updateQuery, [
+        numero_viajes,
+        kilometraje_recorrido,
+        monto,
+        checkResult.rows[0].id_ingreso
+      ]);
+
+      return res.json(rows[0]);
+    }
+
+    // ➕ 3. Si NO existe → INSERT
+    const insertQuery = `
       INSERT INTO ingresos (
         no_lista,
         monto,
@@ -1080,16 +1114,15 @@ app.post("/ingresos", async (req, res) => {
       RETURNING *
     `;
 
-    const values = [
+    const { rows } = await pool.query(insertQuery, [
       no_lista,
       monto,
       numero_viajes,
       fecha,
       kilometraje_recorrido,
-      tarifa_aplicada
-    ];
+      TARIFA_REAL
+    ]);
 
-    const { rows } = await pool.query(query, values);
     res.json(rows[0]);
 
   } catch (error) {

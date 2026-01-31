@@ -5,6 +5,7 @@ import IndexFooter from '../Footers/IndexFooter';
 
 function MisReportes() {
   const [reportes, setReportes] = useState([]);
+  const [resumen, setResumen] = useState(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -16,9 +17,23 @@ function MisReportes() {
     }
   }, [user]);
 
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/ingresos/taxista/${user.no_lista}?mes=1&anio=2026`)
+      .then(res => res.json())
+      .then(data => setResumen(data));
+  }, [user]);
+
   return (
     <div>
       <TaxistaNavbar />
+
+      <div className="card p-3 text-center">
+        <h4>Resumen Mensual</h4>
+        <p>Viajes: {resumen?.total_viajes}</p>
+        <p>Kilómetros: {resumen?.km_totales} km</p>
+        <p><strong>Ingresos: ${resumen?.ingresos_totales} MXN</strong></p>
+      </div>
+
       <div className="container mt-4">
         <h1 className="text-center fw-bold">Mis Reportes Generados</h1>
         <div className="table-responsive mt-4">

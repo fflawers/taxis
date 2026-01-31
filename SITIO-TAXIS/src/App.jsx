@@ -15,6 +15,7 @@ import MisAcuerdos from "./components/viewsTaxis/MisAcuerdos";
 import Dashboard from "./components/Dashboard/dashboard";
 import GestionActivos from "./components/views/GestionActivos"
 import Reports from "./components/views/Reports"
+import RegistrarIngresos from "./components/viewsTaxis/RegistrarIngresos";
 
 
 
@@ -50,6 +51,8 @@ function App() {
             <Route path="/taxistas" element={<TaxistasPage />} />
             <Route path="/reportes" element={<MisReportes />} />
             <Route path="/resolution" element={<MisAcuerdos />} />
+            <Route path="/ingresos" element={<RegistrarIngresos />} />
+
 
 
           </Route>

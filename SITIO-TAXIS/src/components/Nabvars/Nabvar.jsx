@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../secure/AuthContext";
-import { useState } from 'react'; 
+import { useState } from 'react';
 
 function Navbar() {
   const { logout } = useAuth();
@@ -32,27 +32,27 @@ function Navbar() {
             aria-controls="navbarOffcanvas"
             type="button"
             aria-label="Toggle navigation"
-            className="hamburger navbar-toggler" 
-            onClick={handleNavCollapse} 
-            aria-expanded={!isNavCollapsed} 
+            className="hamburger navbar-toggler"
+            onClick={handleNavCollapse}
+            aria-expanded={!isNavCollapsed}
           >
             <span className="navbar-toggler-icon"></span>
           </button>
-          
+
           {/* 6. Clases dinámicas para mostrar/ocultar el menú */}
-          <div 
-            className={`justify-content-between navbar-collapse ${isNavCollapsed ? 'collapse' : ''}`} 
+          <div
+            className={`justify-content-between navbar-collapse ${isNavCollapsed ? 'collapse' : ''}`}
             id="navbarOffcanvas"
           >
             {/* 7. Clases MODIFICADAS para mostrar en móvil */}
             <div className="navbar-nav me-auto mb-2 mb-lg-0">
               {/* Añadimos un onClick para cerrar el menú al navegar en móvil */}
               <Link to="/inicio" className="nav-link" onClick={() => setIsNavCollapsed(true)}>Inicio</Link>
-              <Link to="/usuarios" className="nav-link" onClick={() => setIsNavCollapsed(true)}>Administrar Usuarios</Link>
+              {/* <Link to="/usuarios" className="nav-link" onClick={() => setIsNavCollapsed(true)}>Administrar Usuarios</Link>
               <Link to="/taxis" className="nav-link" onClick={() => setIsNavCollapsed(true)}>Administrar Taxis</Link>
               <Link to="/incidencias" className="nav-link" onClick={() => setIsNavCollapsed(true)}>Administrar Incidencias</Link>
               <Link to="/acuerdo" className="nav-link" onClick={() => setIsNavCollapsed(true)}>Administrar Acuerdos</Link>
-              <Link to="/reports" className="nav-link" onClick={() => setIsNavCollapsed(true)}>Administrar Reportes</Link>
+              <Link to="/reports" className="nav-link" onClick={() => setIsNavCollapsed(true)}>Administrar Reportes</Link> */}
             </div>
 
             {/* 8. Clases MODIFICADAS para mostrar en móvil (con margen) */}

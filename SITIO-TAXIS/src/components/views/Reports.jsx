@@ -209,13 +209,13 @@ function CentroControlAutomatizado() {
                                 <label className="form-label small fw-bold">2. Taxi (Auto)</label>
                                 <input type="text" className="form-control bg-white text-center border-success fw-bold" value={form.economico ? `#${form.economico}` : "S/A"} readOnly />
                             </div>
-                            {tab === 'reportes' && (
-                                <div className="col-md-6">
-                                    <label className="form-label small fw-bold text-danger">3. ¿Qué sucedió? (Crea incidencia)</label>
-                                    <input type="text" className="form-control border-danger shadow-sm" placeholder="Ej: Rayón en puerta derecha"
-                                        value={form.descripcion_incidencia} onChange={e => setForm({ ...form, descripcion_incidencia: e.target.value })} />
-                                </div>
-                            )}
+
+                            <div className="col-md-6">
+                                <label className="form-label small fw-bold text-danger">3. ¿Qué sucedió? (Crea incidencia)</label>
+                                <input type="text" className="form-control border-danger shadow-sm" placeholder="Ej: Rayón en puerta derecha"
+                                    value={form.descripcion_incidencia} onChange={e => setForm({ ...form, descripcion_incidencia: e.target.value })} />
+                            </div>
+
                             <div className="col-12 d-flex justify-content-end border-top pt-3 mt-2">
                                 <button type="submit" className="btn btn-dark px-5">Procesar Ahora</button>
                             </div>
