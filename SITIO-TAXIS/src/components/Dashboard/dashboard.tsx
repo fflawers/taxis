@@ -12,8 +12,15 @@ interface DashboardAnalytics {
   total_km?: number;
 }
 
+interface TotalesMensuales {
+  total_viajes: number;
+  total_km: number;
+  total_ingreso: number;
+}
+
 function Dashboard() {
   const [datos, setDatos] = useState<DashboardAnalytics[]>([]);
+  const [totalesMensuales, setTotalesMensuales] = useState<TotalesMensuales | null>(null);
   const [modulo, setModulo] = useState<string>("resumen_30_dias");
 
   const fetchAnalisis = async () => {
@@ -23,9 +30,17 @@ function Dashboard() {
         modulo === "ingresos_mensuales"
           ? "ingresos-mensuales"
           : "analisis/" + modulo;
+
       const res = await fetch(`${baseUrl}/dashboard/${endpoint}`);
       const data = await res.json();
-      setDatos(data);
+
+      if (modulo === "ingresos_mensuales") {
+        setTotalesMensuales(data);  // Es un objeto con totales
+        setDatos([]);               // Limpiar listado para evitar renderizaciones erróneas
+      } else {
+        setDatos(data);
+        setTotalesMensuales(null);
+      }
     } catch (error) {
       console.error(`Error al obtener análisis de ${modulo}:`, error);
     }
@@ -89,8 +104,6 @@ function Dashboard() {
 
               {modulo === "ingresos_mensuales" && (
                 <tr>
-                  <th>Posición</th>
-                  <th>Nombre del Chofer</th>
                   <th>Total Viajes</th>
                   <th>Total KM</th>
                   <th>Ingresos MXN</th>
@@ -99,7 +112,19 @@ function Dashboard() {
             </thead>
 
             <tbody>
-              {datos.length > 0 ? (
+              {modulo === "ingresos_mensuales" ? (
+                totalesMensuales ? (
+                  <tr>
+                    <td>{totalesMensuales.total_viajes}</td>
+                    <td>{totalesMensuales.total_km}</td>
+                    <td className="fw-bold text-primary">${totalesMensuales.total_ingreso.toFixed(2)}</td>
+                  </tr>
+                ) : (
+                  <tr>
+                    <td colSpan={3}>Cargando datos o no hay registros en el mes actual...</td>
+                  </tr>
+                )
+              ) : datos.length > 0 ? (
                 datos.map((item, index) => (
                   <tr key={index}>
                     {modulo === "resumen_30_dias" && (
@@ -123,23 +148,11 @@ function Dashboard() {
                         </td>
                       </>
                     )}
-
-                    {modulo === "ingresos_mensuales" && (
-                      <>
-                        <td>{index + 1}</td>
-                        <td>{item.nombre || "N/A"}</td>
-                        <td>{item.total_viajes || 0}</td>
-                        <td>{item.total_km || 0}</td>
-                        <td className="fw-bold text-primary">
-                          ${Number(item.total_ingreso || 0).toFixed(2)}
-                        </td>
-                      </>
-                    )}
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={modulo === "ingresos_mensuales" ? 5 : 3}>
+                  <td colSpan={modulo === "ingresos_mensuales" ? 3 : 3}>
                     Cargando datos o no hay registros en los últimos 30 días...
                   </td>
                 </tr>

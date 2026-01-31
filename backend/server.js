@@ -1198,23 +1198,20 @@ app.get("/dashboard/ingresos-mensuales", async (req, res) => {
   try {
     const query = `
       SELECT 
-        u.nombre,
         SUM(i.numero_viajes) AS total_viajes,
         SUM(i.kilometraje_recorrido) AS total_km,
         SUM(i.monto) AS total_ingreso
       FROM ingresos i
-      JOIN usuario u ON u.no_lista = i.no_lista
       WHERE DATE_TRUNC('month', i.fecha) = DATE_TRUNC('month', NOW())
-      GROUP BY u.nombre
-      ORDER BY SUM(i.monto) DESC
     `;
     const { rows } = await pool.query(query);
-    res.json(rows);
+    res.json(rows[0]);  // Solo un objeto con los totales
   } catch (error) {
     console.error("Error al obtener resumen mensual de ingresos:", error);
     res.status(500).json({ error: error.message });
   }
 });
+
 
 
 
