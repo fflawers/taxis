@@ -1196,6 +1196,52 @@ app.get("/dashboard/ingresos-mensuales", async (req, res) => {
   }
 });
 
+// GET /dashboard/viajes-top
+app.get("/dashboard/viajes-top", async (req, res) => {
+  try {
+    const query = `
+      SELECT t.nombre, SUM(i.numero_viajes) AS total_viajes
+      FROM ingresos i
+      JOIN taxistas t ON t.no_lista = i.no_lista
+      WHERE i.fecha >= NOW() - INTERVAL '30 days'
+      GROUP BY t.nombre
+      ORDER BY SUM(i.numero_viajes) DESC
+      LIMIT 10
+    `;
+    const { rows } = await pool.query(query);
+    res.json(rows);
+  } catch (error) {
+    console.error("Error al obtener ranking de viajes:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+// GET /dashboard/ingresos-mensuales
+app.get("/dashboard/ingresos-mensuales", async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        t.nombre,
+        SUM(i.numero_viajes) AS total_viajes,
+        SUM(i.kilometraje_recorrido) AS total_km,
+        SUM(i.monto) AS total_ingreso
+      FROM ingresos i
+      JOIN taxistas t ON t.no_lista = i.no_lista
+      WHERE DATE_TRUNC('month', i.fecha) = DATE_TRUNC('month', NOW())
+      GROUP BY t.nombre
+      ORDER BY SUM(i.monto) DESC
+    `;
+    const { rows } = await pool.query(query);
+    res.json(rows);
+  } catch (error) {
+    console.error("Error al obtener resumen mensual de ingresos:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+
 
 
 

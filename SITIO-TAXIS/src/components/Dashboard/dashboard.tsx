@@ -9,7 +9,7 @@ interface DashboardAnalytics {
   nombre?: string;
   total_ingreso?: number;
   total_viajes?: number;
-  total_km?: number; // agregado para ingresos mensuales
+  total_km?: number;
 }
 
 function Dashboard() {
@@ -19,9 +19,11 @@ function Dashboard() {
   const fetchAnalisis = async () => {
     try {
       const baseUrl = (import.meta as any).env.VITE_API_URL;
-      const res = await fetch(
-        `${baseUrl}/dashboard/${modulo === "ingresos_mensuales" ? "ingresos-mensuales" : "analisis/" + modulo}`
-      );
+      const endpoint =
+        modulo === "ingresos_mensuales"
+          ? "ingresos-mensuales"
+          : "analisis/" + modulo;
+      const res = await fetch(`${baseUrl}/dashboard/${endpoint}`);
       const data = await res.json();
       setDatos(data);
     } catch (error) {
@@ -102,22 +104,22 @@ function Dashboard() {
                   <tr key={index}>
                     {modulo === "resumen_30_dias" && (
                       <>
-                        <td>{item.total_reportes}</td>
-                        <td>{item.total_taxistas}</td>
-                        <td>{item.total_taxis}</td>
+                        <td>{item.total_reportes || 0}</td>
+                        <td>{item.total_taxistas || 0}</td>
+                        <td>{item.total_taxis || 0}</td>
                       </>
                     )}
 
                     {(modulo === "ingresos_top" || modulo === "choferes_reportados" || modulo === "viajes_top") && (
                       <>
                         <td>{index + 1}</td>
-                        <td>{item.nombre}</td>
+                        <td>{item.nombre || "N/A"}</td>
                         <td className="fw-bold text-primary">
                           {modulo === "ingresos_top"
-                            ? `$${Number(item.total_ingreso).toFixed(2)}`
+                            ? `$${Number(item.total_ingreso || 0).toFixed(2)}`
                             : modulo === "viajes_top"
-                              ? item.total_viajes
-                              : item.total_reportes}
+                              ? item.total_viajes || 0
+                              : item.total_reportes || 0}
                         </td>
                       </>
                     )}
@@ -125,11 +127,11 @@ function Dashboard() {
                     {modulo === "ingresos_mensuales" && (
                       <>
                         <td>{index + 1}</td>
-                        <td>{item.nombre}</td>
-                        <td>{item.total_viajes}</td>
-                        <td>{item.total_km}</td>
+                        <td>{item.nombre || "N/A"}</td>
+                        <td>{item.total_viajes || 0}</td>
+                        <td>{item.total_km || 0}</td>
                         <td className="fw-bold text-primary">
-                          ${Number(item.total_ingreso).toFixed(2)}
+                          ${Number(item.total_ingreso || 0).toFixed(2)}
                         </td>
                       </>
                     )}
@@ -146,6 +148,7 @@ function Dashboard() {
           </table>
         </div>
       </div>
+
       <IndexFooter />
     </div>
   );
