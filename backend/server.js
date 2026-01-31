@@ -1056,24 +1056,75 @@ app.get("/dashboard/analisis/:modulo", async (req, res) => {
 });
 
 app.post("/ingresos", async (req, res) => {
-  const { no_lista, km_recorrido, numero_viajes } = req.body;
+  const {
+    no_lista,
+    kilometraje_recorrido,
+    numero_viajes,
+    tarifa_aplicada,
+    fecha
+  } = req.body;
 
-  // Lógica de tarifa (Ejemplo: $12 pesos por kilómetro)
-  const TARIFA_POR_KM = 12.00;
-  const monto_calculado = km_recorrido * TARIFA_POR_KM;
-
-  const sqlQuery = `
-    INSERT INTO ingresos (no_lista, monto, numero_viajes, kilometraje_recorrido, tarifa_aplicada)
-    VALUES ($1, $2, $3, $4, $5) RETURNING *;
-  `;
+  const monto = kilometraje_recorrido * tarifa_aplicada;
 
   try {
-    const { rows } = await pool.query(sqlQuery, [no_lista, monto_calculado, numero_viajes, km_recorrido, TARIFA_POR_KM]);
-    res.status(201).json({ message: "Ingreso registrado", data: rows[0] });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const query = `
+      INSERT INTO ingresos (
+        no_lista,
+        monto,
+        numero_viajes,
+        fecha,
+        kilometraje_recorrido,
+        tarifa_aplicada
+      )
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *
+    `;
+
+    const values = [
+      no_lista,
+      monto,
+      numero_viajes,
+      fecha,
+      kilometraje_recorrido,
+      tarifa_aplicada
+    ];
+
+    const { rows } = await pool.query(query, values);
+    res.json(rows[0]);
+
+  } catch (error) {
+    console.error("Error al guardar ingresos:", error);
+    res.status(500).json({ error: error.message });
   }
 });
+
+
+app.get("/ingresos/taxista/:id", async (req, res) => {
+  const taxistaId = req.params.id;
+  const { mes, anio } = req.query;
+
+  try {
+    const query = `
+      SELECT
+        SUM(numero_viajes) AS total_viajes,
+        SUM(monto) AS ingresos_totales,
+        SUM(kilometraje_recorrido) AS km_totales
+      FROM ingresos
+      WHERE no_lista = $1
+      AND EXTRACT(MONTH FROM fecha) = $2
+      AND EXTRACT(YEAR FROM fecha) = $3
+    `;
+
+    const values = [taxistaId, mes, anio];
+    const { rows } = await pool.query(query, values);
+
+    res.json(rows[0]);
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // ===============================================
 // 🚀 SERVIDOR (VERSIÓN CORREGIDA PARA DESPLIEGUE)
