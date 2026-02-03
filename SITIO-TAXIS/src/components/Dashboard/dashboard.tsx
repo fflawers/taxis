@@ -1,3 +1,25 @@
+import { Bar, Pie } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+} from "chart.js";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
 import { useState, useEffect } from "react";
 import Navbar from "../Nabvars/Nabvar";
 import IndexFooter from "../Footers/IndexFooter";
@@ -46,6 +68,53 @@ function Dashboard() {
     }
   };
 
+
+  // Datos para gráficas
+  const chartData = {
+    labels: datos.map(d => d.nombre || "N/A"),
+    datasets: [
+      {
+        label:
+          modulo === "ingresos_top"
+            ? "Ingresos MXN"
+            : modulo === "viajes_top"
+              ? "Total Viajes"
+              : "Total Reportes",
+        data: datos.map(d =>
+          modulo === "ingresos_top"
+            ? Number(d.total_ingreso || 0)
+            : modulo === "viajes_top"
+              ? Number(d.total_viajes || 0)
+              : Number(d.total_reportes || 0)
+        ),
+        backgroundColor: "rgba(54, 162, 235, 0.6)"
+      }
+    ]
+  };
+
+  const totalesMensualesData = {
+    labels: ["Total Viajes", "Total KM", "Total Ingresos"],
+    datasets: [
+      {
+        label: "Totales Mes Actual",
+        data: totalesMensuales
+          ? [
+            Number(totalesMensuales.total_viajes),
+            Number(totalesMensuales.total_km),
+            Number(totalesMensuales.total_ingreso)
+          ]
+          : [0, 0, 0],
+        backgroundColor: [
+          "rgba(75, 192, 192, 0.6)",
+          "rgba(255, 206, 86, 0.6)",
+          "rgba(255, 99, 132, 0.6)"
+        ]
+      }
+    ]
+  };
+
+
+
   useEffect(() => {
     fetchAnalisis();
   }, [modulo]);
@@ -66,7 +135,7 @@ function Dashboard() {
                 value={modulo}
                 onChange={(e) => setModulo(e.target.value)}
               >
-                <option value="resumen_30_dias">Resumen General</option>
+                {/* <option value="resumen_30_dias">Resumen General</option> */}
                 <option value="ingresos_top">Ranking: Ingresos por Chofer</option>
                 <option value="choferes_reportados">Ranking: Choferes más Reportados</option>
                 <option value="viajes_top">Ranking: Más viajes realizados</option>
@@ -80,44 +149,17 @@ function Dashboard() {
         <div className="table-responsive shadow-sm rounded">
           <table className="table table-hover table-bordered align-middle text-center">
             <thead className="table-dark">
-              {modulo === "resumen_30_dias" && (
-                <tr>
-                  <th>Total Reportes</th>
-                  <th>Taxistas Activos</th>
-                  <th>Total Taxis</th>
-                </tr>
-              )}
-
-              {(modulo === "ingresos_top" || modulo === "choferes_reportados" || modulo === "viajes_top") && (
-                <tr>
-                  <th>Posición</th>
-                  <th>Nombre del Chofer</th>
-                  <th>
-                    {modulo === "ingresos_top"
-                      ? "Monto Total"
-                      : modulo === "viajes_top"
-                        ? "Total Viajes"
-                        : "Total Reportes"}
-                  </th>
-                </tr>
-              )}
-
-              {modulo === "ingresos_mensuales" && (
-                <tr>
-                  <th>Total Viajes</th>
-                  <th>Total KM</th>
-                  <th>Ingresos MXN</th>
-                </tr>
-              )}
+              {/* ...tus th según módulo... */}
             </thead>
-
             <tbody>
               {modulo === "ingresos_mensuales" ? (
                 totalesMensuales ? (
                   <tr>
                     <td>{totalesMensuales.total_viajes}</td>
                     <td>{totalesMensuales.total_km}</td>
-                    <td className="fw-bold text-primary">${totalesMensuales.total_ingreso.toFixed(2)}</td>
+                    <td className="fw-bold text-primary">
+                      ${Number(totalesMensuales.total_ingreso || 0).toFixed(2)}
+                    </td>
                   </tr>
                 ) : (
                   <tr>
@@ -134,7 +176,6 @@ function Dashboard() {
                         <td>{item.total_taxis || 0}</td>
                       </>
                     )}
-
                     {(modulo === "ingresos_top" || modulo === "choferes_reportados" || modulo === "viajes_top") && (
                       <>
                         <td>{index + 1}</td>
@@ -160,6 +201,22 @@ function Dashboard() {
             </tbody>
           </table>
         </div>
+
+        {/* Gráficas */}
+        {modulo !== "resumen_30_dias" && datos.length > 0 && modulo !== "ingresos_mensuales" && (
+          <div className="mt-5">
+            <h5 className="text-center">Gráfica {modulo.replace("_", " ")}</h5>
+            <Bar data={chartData} options={{ responsive: true }} />
+          </div>
+        )}
+
+        {modulo === "ingresos_mensuales" && totalesMensuales && (
+          <div className="mt-5">
+            <h5 className="text-center">Totales Mensuales</h5>
+            <Bar data={totalesMensualesData} options={{ responsive: true }} />
+          </div>
+        )}
+
       </div>
 
       <IndexFooter />
