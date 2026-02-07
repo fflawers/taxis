@@ -27,8 +27,7 @@ ChartJS.register(
 );
 
 import { useState, useEffect } from "react";
-import Navbar from "../Nabvars/Nabvar";
-import IndexFooter from "../Footers/IndexFooter";
+// Navigation handled by AdminLayout's Sidebar
 import "./Dashboard.css";
 
 // Iconos inline para evitar dependencias extra
@@ -224,7 +223,6 @@ function Dashboard() {
 
     return (
         <div className="dashboard-container">
-            <Navbar />
 
             <div className="container mt-4">
                 {/* Header */}
@@ -406,8 +404,6 @@ function Dashboard() {
                     </div>
                 )}
             </div>
-
-            <IndexFooter />
         </div>
     );
 }

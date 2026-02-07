@@ -1213,7 +1213,57 @@ app.get("/dashboard/ingresos-mensuales", async (req, res) => {
   }
 });
 
+// ===============================================
+// 🚀 ENDPOINTS PARA PORTAL TAXISTA GAMIFICADO
+// ===============================================
 
+// GET Estadísticas de ingresos de un taxista específico
+app.get("/ingresos/taxista/:no_lista", async (req, res) => {
+  const { no_lista } = req.params;
+  const { mes, anio } = req.query;
+
+  try {
+    const query = `
+      SELECT 
+        COALESCE(SUM(i.numero_viajes), 0) AS total_viajes,
+        COALESCE(SUM(i.monto), 0) AS ingresos_totales,
+        COALESCE(SUM(i.kilometraje_recorrido), 0) AS km_totales
+      FROM ingresos i
+      WHERE i.no_lista = $1
+        AND EXTRACT(MONTH FROM i.fecha) = $2
+        AND EXTRACT(YEAR FROM i.fecha) = $3
+    `;
+
+    const currentMonth = mes || new Date().getMonth() + 1;
+    const currentYear = anio || new Date().getFullYear();
+
+    const { rows } = await pool.query(query, [no_lista, currentMonth, currentYear]);
+    res.json(rows[0] || { total_viajes: 0, ingresos_totales: 0, km_totales: 0 });
+  } catch (error) {
+    console.error("Error al obtener ingresos del taxista:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET Reportes activos de un taxista específico
+app.get("/reportes/taxista/:no_lista", async (req, res) => {
+  const { no_lista } = req.params;
+
+  try {
+    const query = `
+      SELECT r.id_reporte, r.descripcion, r.fecha
+      FROM reporte r
+      WHERE r.no_lista = $1
+      ORDER BY r.fecha DESC
+    `;
+
+    const { rows } = await pool.query(query, [no_lista]);
+    res.json(rows);
+  } catch (error) {
+    console.error("Error al obtener reportes del taxista:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 
 
