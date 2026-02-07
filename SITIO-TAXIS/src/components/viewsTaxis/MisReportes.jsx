@@ -1,74 +1,96 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../secure/AuthContext';
 import TaxistaNavbar from '../Nabvars/TaxistaNavbar';
-import IndexFooter from '../Footers/IndexFooter';
 
 function MisReportes() {
   const [reportes, setReportes] = useState([]);
-  const [resumen, setResumen] = useState(null);
+  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+
+  const baseUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     if (user?.no_lista) {
-      fetch(`${import.meta.env.VITE_API_URL}/reportes/taxista/${user.no_lista}`)
+      fetch(`${baseUrl}/reportes/taxista/${user.no_lista}`)
         .then(res => res.json())
-        .then(data => setReportes(data))
-        .catch(err => console.error("Error al cargar mis reportes:", err));
+        .then(data => setReportes(Array.isArray(data) ? data : []))
+        .catch(err => console.error("Error al cargar mis reportes:", err))
+        .finally(() => setLoading(false));
     }
-  }, [user]);
+  }, [user, baseUrl]);
 
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/ingresos/taxista/${user.no_lista}?mes=1&anio=2026`)
-      .then(res => res.json())
-      .then(data => setResumen(data));
-  }, [user]);
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('es-MX', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
 
   return (
-    <div>
+    <div className="taxista-dashboard" style={{ minHeight: '100vh' }}>
       <TaxistaNavbar />
 
-      <div className="card p-3 text-center">
-        <h4>Resumen Mensual</h4>
-        <p>Viajes: {resumen?.total_viajes}</p>
-        <p>Kilómetros: {resumen?.km_totales} km</p>
-        <p><strong>Ingresos: ${Number(resumen?.ingresos_totales || 0).toFixed(2)} MXN</strong></p>
-      </div>
+      <div className="page-container">
+        {/* Header */}
+        <header className="page-header" style={{ textAlign: 'center' }}>
+          <h1 className="page-title">📋 Mis Reportes</h1>
+          <p className="page-subtitle">Historial de reportes generados sobre tu actividad</p>
+        </header>
 
-      <div className="container mt-4">
-        <h1 className="text-center fw-bold">Mis Reportes Generados</h1>
-        <div className="table-responsive mt-4">
-          <table className="table table-bordered table-hover align-middle text-center">
-            <thead>
-              <tr>
-                <th>ID Reporte</th>
-                <th>Fecha</th>
-                <th>Taxi (Placa)</th>
-                <th>Incidencia</th>
-                <th>Observaciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reportes.length > 0 ? (
-                // ✅ CORREGIDO: Propiedades en minúsculas
-                reportes.map((rep) => (
-                  <tr key={rep.id_reporte}>
-                    <td>{rep.id_reporte}</td>
-                    <td>{rep.fecha_reporte ? new Date(rep.fecha_reporte).toLocaleDateString() : 'N/A'}</td>
-                    <td>{rep.placa_taxi}</td>
-                    <td>{rep.incidencia_descripcion}</td>
-                    <td>{rep.observaciones || 'N/A'}</td>
+        {/* Stats Summary */}
+        <div className="glass-card mb-3 animate-fade-in" style={{ textAlign: 'center' }}>
+          <div className="flex-center gap-3" style={{ flexWrap: 'wrap' }}>
+            <div>
+              <span className="text-muted" style={{ fontSize: '0.9rem' }}>Total de Reportes</span>
+              <p style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--color-accent)', margin: 0 }}>
+                {reportes.length}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Reports Table */}
+        <div className="glass-card animate-fade-in">
+          {loading ? (
+            <div className="animate-stagger">
+              {[1, 2, 3].map(i => <div key={i} className="skeleton skeleton-table-row"></div>)}
+            </div>
+          ) : reportes.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">✅</div>
+              <p className="empty-state-title">Sin reportes</p>
+              <p className="empty-state-text">No tienes reportes generados. ¡Sigue así!</p>
+            </div>
+          ) : (
+            <div className="premium-table-container">
+              <table className="premium-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Fecha</th>
+                    <th>Taxi</th>
+                    <th>Incidencia</th>
+                    <th>Observaciones</th>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5" className="text-center">No has generado ningún reporte.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                </thead>
+                <tbody className="animate-stagger">
+                  {reportes.map((rep) => (
+                    <tr key={rep.id_reporte}>
+                      <td><strong>#{rep.id_reporte}</strong></td>
+                      <td>{formatDate(rep.fecha_reporte)}</td>
+                      <td><span className="text-accent">{rep.placa_taxi}</span></td>
+                      <td>{rep.incidencia_descripcion}</td>
+                      <td className="text-muted">{rep.observaciones || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
-      <IndexFooter />
     </div>
   );
 }

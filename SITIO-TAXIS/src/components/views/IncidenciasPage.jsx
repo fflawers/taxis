@@ -1,49 +1,36 @@
 import { useEffect, useState } from "react";
-import Navbar from "../Nabvars/Nabvar";
-import IndexFooter from "../Footers/IndexFooter";
+// Navigation handled by AdminLayout's Sidebar
 
 function IncidenciasPage() {
   const [incidencias, setIncidencias] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [form, setForm] = useState({ descripcion: "", observaciones: "", no_lista: "" });
-
   const [incidenciaAEditar, setIncidenciaAEditar] = useState(null);
   const [formEdicion, setFormEdicion] = useState(null);
 
-  // 1. MANEJO DE ERRORES MEJORADO EN FETCH INCIDENCIAS
+  const baseUrl = import.meta.env.VITE_API_URL;
+
   const fetchIncidencias = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/incidencias`);
-
+      const res = await fetch(`${baseUrl}/incidencias`);
       if (!res.ok) {
-        let errorMsg = 'Error desconocido del servidor al obtener incidencias';
-        try {
-          const errData = await res.json();
-          errorMsg = errData.message || errData.error || errorMsg;
-        } catch (e) {
-          errorMsg = `El servidor devolvió un error ${res.status}.`;
-        }
-
-        console.error("Error del servidor al obtener incidencias:", errorMsg);
-        setIncidencias([]); // <-- Asegura que el estado sea un array
+        setIncidencias([]);
         return;
       }
-
       const data = await res.json();
-      // Asegura que data sea un array (o lo convierte a uno si es null/undefined, aunque la API debería devolver [])
-      setIncidencias(Array.isArray(data) ? data : []); 
+      setIncidencias(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Error de red al obtener incidencias:", error);
-      setIncidencias([]); // <-- Asegura que el estado sea un array
+      console.error("Error al obtener incidencias:", error);
+      setIncidencias([]);
     }
   };
 
   const fetchUsuarios = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/usuarios/taxistas`);
+      const res = await fetch(`${baseUrl}/usuarios/taxistas`);
       if (!res.ok) {
-        console.error("Error al obtener usuarios:", res.status);
         setUsuarios([]);
         return;
       }
@@ -55,8 +42,7 @@ function IncidenciasPage() {
   };
 
   useEffect(() => {
-    fetchIncidencias();
-    fetchUsuarios();
+    Promise.all([fetchIncidencias(), fetchUsuarios()]).finally(() => setLoading(false));
   }, []);
 
   const handleChange = (e) => {
@@ -70,7 +56,7 @@ function IncidenciasPage() {
       return;
     }
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/incidencias`, {
+      const res = await fetch(`${baseUrl}/incidencias`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -88,10 +74,13 @@ function IncidenciasPage() {
   };
 
   const handleDelete = async (id) => {
+    if (!window.confirm("¿Estás seguro de eliminar esta incidencia?")) return;
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/incidencias/${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      const res = await fetch(`${baseUrl}/incidencias/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message);
+      }
       fetchIncidencias();
     } catch (error) {
       console.error("Error al eliminar incidencia:", error);
@@ -103,7 +92,7 @@ function IncidenciasPage() {
     setIncidenciaAEditar(incidencia);
     setFormEdicion({
       descripcion: incidencia.descripcion || '',
-      observaciones: incidencia.observaciones || '', 
+      observaciones: incidencia.observaciones || '',
       no_lista: incidencia.no_lista || ''
     });
   };
@@ -112,7 +101,6 @@ function IncidenciasPage() {
     setFormEdicion({ ...formEdicion, [e.target.name]: e.target.value });
   };
 
-  // 2. RUTA DE ACTUALIZACIÓN CORREGIDA
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
     const id = incidenciaAEditar.id_incidencia;
@@ -121,8 +109,7 @@ function IncidenciasPage() {
       return;
     }
     try {
-      // RUTA CORREGIDA: debe ser /incidencias/:id
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/incidencias/${id}`, {
+      const res = await fetch(`${baseUrl}/incidencias/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formEdicion),
@@ -140,103 +127,178 @@ function IncidenciasPage() {
   };
 
   return (
-    <div>
-      <Navbar />
-      <div className="container mt-4">
-        <h1 className="text-center fw-bold">Gestión de Incidencias</h1>
-        <div className="card p-3 my-4">
-          <h2 className="fw-bold">Agregar Nueva Incidencia</h2>
-          <form onSubmit={handleSubmit}>
-            <div className="row g-3 align-items-end">
-              <div className="col-md-4">
-                <label className="form-label">Descripción</label>
-                <input type="text" name="descripcion" placeholder="Ej. Falla mecánica" value={form.descripcion} onChange={handleChange} className="inputTP" required />
-              </div>
-              <div className="col-md-3">
-                <label className="form-label">Observaciones</label>
-                <input type="text" name="observaciones" placeholder="(Opcional)" value={form.observaciones} onChange={handleChange} className="inputTP" />
-              </div>
-              <div className="col-md-3">
-                <label className="form-label">Conductor que reporta</label>
-                <select name="no_lista" value={form.no_lista} onChange={handleChange} className="inputTP" required>
-                  <option value="">-- Seleccionar --</option>
-                  {usuarios.map((u) => (
-                    <option key={u.no_lista} value={u.no_lista}>{u.nombre} {u.apellido_p}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-md-2">
-                <button type="submit" className="btn btn-green ">Agregar</button>
-              </div>
-            </div>
-          </form>
-        </div>
+    <div className="page-container">
+      {/* Page Header */}
+      <header className="page-header">
+        <h1 className="page-title">⚠️ Gestión de Incidencias</h1>
+        <p className="page-subtitle">Registro y seguimiento de incidencias reportadas</p>
+      </header>
 
-        <h2 className="fw-bold">Incidencias Registradas</h2>
-        <div className="table-responsive my-5">
-          <table className="table table-bordered table-hover align-middle text-center">
-            <thead>
-              <tr>
-                <th>ID</th><th>Descripción</th><th>Conductor</th><th>Observaciones</th><th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Se evita el error .map porque el estado ahora siempre es un array */}
-              {incidencias.map((inc) => (
-                <tr key={inc.id_incidencia}>
-                  <td>{inc.id_incidencia}</td>
-                  <td>{inc.descripcion}</td>
-                  <td>{inc.nombre_conductor || <span className="text-muted">No asignado</span>}</td>
-                  <td>{inc.observaciones}</td>
-                  <td>
-                    <button className="btn btn-sm btn-info me-2" onClick={() => handleEditClick(inc)}>Editar</button>
-                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(inc.id_incidencia)}>Eliminar</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Form to add new incident */}
+      <div className="glass-card mb-3 animate-fade-in">
+        <div className="glass-card-header">
+          <h3 className="glass-card-title">➕ Nueva Incidencia</h3>
         </div>
+        <form onSubmit={handleSubmit}>
+          <div className="grid-3" style={{ alignItems: 'end' }}>
+            <div className="form-group mb-0">
+              <label className="form-label">Descripción</label>
+              <input
+                type="text"
+                name="descripcion"
+                placeholder="Ej. Falla mecánica"
+                value={form.descripcion}
+                onChange={handleChange}
+                className="form-control"
+                required
+              />
+            </div>
+            <div className="form-group mb-0">
+              <label className="form-label">Observaciones (Opcional)</label>
+              <input
+                type="text"
+                name="observaciones"
+                placeholder="Detalles adicionales..."
+                value={form.observaciones}
+                onChange={handleChange}
+                className="form-control"
+              />
+            </div>
+            <div className="form-group mb-0">
+              <label className="form-label">Conductor</label>
+              <select
+                name="no_lista"
+                value={form.no_lista}
+                onChange={handleChange}
+                className="form-control form-select"
+                required
+              >
+                <option value="">-- Seleccionar --</option>
+                {usuarios.map((u) => (
+                  <option key={u.no_lista} value={u.no_lista}>{u.nombre} {u.apellido_p}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="mt-3" style={{ textAlign: 'right' }}>
+            <button type="submit" className="btn btn-primary">✅ Registrar Incidencia</button>
+          </div>
+        </form>
       </div>
 
+      {/* Incidents Table */}
+      <div className="glass-card animate-fade-in">
+        <div className="glass-card-header">
+          <h3 className="glass-card-title">📋 Incidencias Registradas</h3>
+          <span className="badge badge-info">{incidencias.length} registros</span>
+        </div>
+
+        {loading ? (
+          <div className="animate-stagger">
+            {[1, 2, 3].map(i => <div key={i} className="skeleton skeleton-table-row"></div>)}
+          </div>
+        ) : incidencias.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">✅</div>
+            <p className="empty-state-title">No hay incidencias registradas</p>
+            <p className="empty-state-text">Todo en orden por ahora</p>
+          </div>
+        ) : (
+          <div className="premium-table-container">
+            <table className="premium-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Descripción</th>
+                  <th>Conductor</th>
+                  <th>Observaciones</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="animate-stagger">
+                {incidencias.map((inc) => (
+                  <tr key={inc.id_incidencia}>
+                    <td><strong>#{inc.id_incidencia}</strong></td>
+                    <td>{inc.descripcion}</td>
+                    <td>{inc.nombre_conductor || <span className="text-muted">No asignado</span>}</td>
+                    <td className="text-muted">{inc.observaciones || '-'}</td>
+                    <td>
+                      <div className="flex gap-1">
+                        <button className="btn btn-secondary btn-sm" onClick={() => handleEditClick(inc)}>
+                          ✏️ Editar
+                        </button>
+                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(inc.id_incidencia)}>
+                          🗑️
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Edit Modal */}
       {incidenciaAEditar && formEdicion && (
-        <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Editando Incidencia #{incidenciaAEditar.id_incidencia}</h5>
-                <button type="button" className="btn-close" onClick={() => setIncidenciaAEditar(null)}></button>
-              </div>
-              <form onSubmit={handleUpdateSubmit}>
-                <div className="modal-body">
-                  <div className="mb-3">
-                    <label className="form-label">Descripción</label>
-                    <input type="text" name="descripcion" value={formEdicion.descripcion} onChange={handleEditChange} className="form-control" required />
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label">Conductor</label>
-                    <select name="no_lista" value={formEdicion.no_lista} onChange={handleEditChange} className="form-select" required>
-                      <option value="">-- Reasignar --</option>
-                      {usuarios.map((u) => (
-                        <option key={u.no_lista} value={u.no_lista}>{u.nombre} {u.apellido_p}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label">Observaciones</label>
-                    <input type="text" name="observaciones" value={formEdicion.observaciones} onChange={handleEditChange} className="form-control"/>
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setIncidenciaAEditar(null)}>Cancelar</button>
-                  <button type="submit" className="btn btn-primary">Guardar Cambios</button>
-                </div>
-              </form>
+        <div className="modal-overlay" onClick={() => setIncidenciaAEditar(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">✏️ Editar Incidencia #{incidenciaAEditar.id_incidencia}</h3>
+              <button className="modal-close" onClick={() => setIncidenciaAEditar(null)}>✕</button>
             </div>
+            <form onSubmit={handleUpdateSubmit}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label className="form-label">Descripción</label>
+                  <input
+                    type="text"
+                    name="descripcion"
+                    value={formEdicion.descripcion}
+                    onChange={handleEditChange}
+                    className="form-control"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Conductor</label>
+                  <select
+                    name="no_lista"
+                    value={formEdicion.no_lista}
+                    onChange={handleEditChange}
+                    className="form-control form-select"
+                    required
+                  >
+                    <option value="">-- Reasignar --</option>
+                    {usuarios.map((u) => (
+                      <option key={u.no_lista} value={u.no_lista}>{u.nombre} {u.apellido_p}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group mb-0">
+                  <label className="form-label">Observaciones</label>
+                  <input
+                    type="text"
+                    name="observaciones"
+                    value={formEdicion.observaciones}
+                    onChange={handleEditChange}
+                    className="form-control"
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setIncidenciaAEditar(null)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  💾 Guardar Cambios
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
-      <IndexFooter />
     </div>
   );
 }
