@@ -12,12 +12,10 @@ import AcuerdosPage from "./components/views/AcuerdosPage";
 import ReportesPage from "./components/views/ReportesPage";
 import MisReportes from "./components/viewsTaxis/MisReportes";
 import MisAcuerdos from "./components/viewsTaxis/MisAcuerdos";
-import Dashboard from "./components/Dashboard/dashboard";
+import Dashboard from "./components/Dashboard/Dashboard";
 import GestionActivos from "./components/views/GestionActivos"
 import Reports from "./components/views/Reports"
 import RegistrarIngresos from "./components/viewsTaxis/RegistrarIngresos";
-
-
 
 
 

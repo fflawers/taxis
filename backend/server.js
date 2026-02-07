@@ -997,12 +997,27 @@ app.get("/dashboard/analisis/:modulo", async (req, res) => {
     switch (modulo) {
       case "ingresos_top":
         sqlQuery = `
-          SELECT u.no_lista, u.nombre, SUM(i.monto) as total_ingreso
+          SELECT u.nombre, 
+                SUM(i.monto) as total_ingreso, 
+                SUM(i.kilometraje_recorrido) as total_km,
+                (SUM(i.monto) / NULLIF(SUM(i.kilometraje_recorrido), 0)) as eficiencia
           FROM ingresos i
           JOIN usuario u ON i.no_lista = u.no_lista
           WHERE i.fecha >= CURRENT_DATE - INTERVAL '30 days'
-          GROUP BY u.no_lista, u.nombre
-          ORDER BY total_ingreso DESC LIMIT 5`;
+          GROUP BY u.nombre
+          ORDER BY total_ingreso DESC
+          LIMIT 10`;
+        break;
+
+      case "viajes_top":
+        sqlQuery = `
+          SELECT u.nombre, SUM(i.numero_viajes) as total_viajes
+          FROM ingresos i
+          JOIN usuario u ON i.no_lista = u.no_lista
+          WHERE i.fecha >= CURRENT_DATE - INTERVAL '30 days'
+          GROUP BY u.nombre
+          ORDER BY total_viajes DESC
+          LIMIT 10`;
         break;
 
       case "choferes_reportados":
@@ -1021,20 +1036,6 @@ app.get("/dashboard/analisis/:modulo", async (req, res) => {
             (SELECT COUNT(*) FROM reporte WHERE fecha_reporte >= CURRENT_DATE - INTERVAL '30 days') as total_reportes,
             (SELECT COUNT(*) FROM usuario WHERE rol = 'Taxista') as total_taxistas,
             (SELECT COUNT(*) FROM taxi) as total_taxis`;
-        break;
-
-      // En tu server.js, actualiza el caso del dashboard:
-      case "ingresos_top":
-        sqlQuery = `
-          SELECT u.nombre, 
-                SUM(i.monto) as total_ingreso, 
-                SUM(i.kilometraje_recorrido) as total_km,
-                (SUM(i.monto) / NULLIF(SUM(i.kilometraje_recorrido), 0)) as eficiencia
-          FROM ingresos i
-          JOIN usuario u ON i.no_lista = u.no_lista
-          WHERE i.fecha >= CURRENT_DATE - INTERVAL '30 days'
-          GROUP BY u.nombre
-          ORDER BY total_ingreso DESC`;
         break;
 
       default:
