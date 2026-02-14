@@ -933,34 +933,34 @@ app.get("/reportes/taxista/:id", async (req, res) => {
   }
 });
 
-// ✅ GET (acuerdos de un taxista) - TRADUCIDO A PG (Más eficiente)
+// ✅ GET (acuerdos de un taxista) - CORREGIDO para mostrar acuerdos de SUS incidencias
 app.get("/acuerdos/taxista/:id", async (req, res) => {
   const taxistaId = req.params.id;
 
   try {
-    // 1. Define la consulta
-    //    Unimos 'acuerdo' con 'reporte' (para filtrar por taxista)
-    //    y 'acuerdo' con 'incidencia' (para obtener la descripción)
+    // Buscar acuerdos relacionados a incidencias del taxista
+    // Los acuerdos se generan desde incidencias, así que buscamos por no_lista_conductor
     const sqlQuery = `
-            SELECT DISTINCT
-                a.id_acuerdo, a.descripcion, a.id_incidencia,
-                i.descripcion AS incidencia_descripcion
-            FROM acuerdo a
-            JOIN reporte r ON a.id_acuerdo = r.id_acuerdo
-            LEFT JOIN incidencia i ON a.id_incidencia = i.id_incidencia
-            WHERE r.no_lista = $1;
-        `;
-    // 'DISTINCT' evita que salgan acuerdos duplicados si están en varios reportes
+      SELECT DISTINCT
+        a.id_acuerdo, 
+        a.descripcion, 
+        a.id_incidencia,
+        i.descripcion AS incidencia_descripcion
+      FROM acuerdo a
+      LEFT JOIN incidencia i ON a.id_incidencia = i.id_incidencia
+      WHERE i.no_lista_conductor = $1
+      ORDER BY a.id_acuerdo DESC;
+    `;
     const values = [taxistaId];
 
-    // 2. Ejecuta la consulta
+    // Ejecuta la consulta
     const { rows: acuerdos } = await pool.query(sqlQuery, values);
 
     if (!acuerdos || acuerdos.length === 0) {
       return res.json([]); // Si no hay, devuelve array vacío
     }
 
-    // 3. Mapea la respuesta (tu lógica ya estaba bien)
+    // Mapea la respuesta
     const acuerdosFinales = acuerdos.map(ac => ({
       id_acuerdo: ac.id_acuerdo,
       descripcion: ac.descripcion,

@@ -1,0 +1,16 @@
+{
+    "docs": [
+        {
+            "title": "Taxis - README General",
+            "file": "2026-02-07_taxis_README.md"
+        },
+        {
+            "title": "Taxis - Documentación Funcional",
+            "file": "2026-02-07_taxis_functional_documentation.md"
+        },
+        {
+            "title": "Taxis - Arquitectura Técnica",
+            "file": "2026-02-07_taxis_technical_architecture.md"
+        }
+    ]
+}
