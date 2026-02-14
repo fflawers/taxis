@@ -42,7 +42,6 @@ function App() {
               <Route path="/incidencias" element={<IncidenciasPage />} />
               <Route path="/acuerdo" element={<AcuerdosPage />} />
               <Route path="/reports" element={<ReportesPage />} />
-              <Route path="/reporte" element={<Reports />} />
             </Route>
           </Route>
 

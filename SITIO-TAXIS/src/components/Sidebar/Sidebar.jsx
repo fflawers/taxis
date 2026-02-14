@@ -14,17 +14,18 @@ function Sidebar() {
 
     const baseUrl = import.meta.env.VITE_API_URL;
 
-    // Fetch pending incidencias count
+    // Fetch pending incidencias count for badge
     useEffect(() => {
         const fetchPendientes = async () => {
             try {
-                const res = await fetch(`${baseUrl}/incidencias?estado=PENDIENTE`);
+                const res = await fetch(`${baseUrl}/incidencias`);
                 if (res.ok) {
                     const data = await res.json();
+                    // Count all incidencias (could filter by estado if available)
                     setPendingIncidencias(Array.isArray(data) ? data.length : 0);
                 }
             } catch (error) {
-                console.error("Error fetching pending incidencias:", error);
+                console.error("Error fetching incidencias:", error);
             }
         };
 
@@ -54,7 +55,7 @@ function Sidebar() {
             items: [
                 { path: "/incidencias", icon: "⚠️", label: "Incidencias", tooltip: "Incidencias", badge: pendingIncidencias || null },
                 { path: "/reports", icon: "📋", label: "Reportes", tooltip: "Reportes" },
-                { path: "/reporte", icon: "📝", label: "Nuevo Reporte", tooltip: "Nuevo" },
+                { path: "/acuerdo", icon: "🤝", label: "Acuerdos", tooltip: "Acuerdos" },
             ]
         }
     ];
