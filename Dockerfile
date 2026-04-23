@@ -39,7 +39,7 @@ RUN chmod +x gradlew && ./gradlew dependencies --no-daemon -q || true
 # Copiar código Kotlin y recursos
 COPY src/main/kotlin/ src/main/kotlin/
 COPY src/main/resources/ src/main/resources/
-COPY src/test/ src/test/
+
 
 # Copiar el frontend ya compilado al lugar correcto para Spring Boot
 COPY --from=frontend-builder /app/src/main/resources/static/ src/main/resources/static/
