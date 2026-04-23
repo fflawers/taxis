@@ -1,6 +1,7 @@
 # ── Entornos ────────────────────────────────────────────────
 .env
 *.env.local
+*.env.example
 # Perfil local de Spring Boot (contiene credenciales reales)
 src/main/resources/application-local.properties
 
