@@ -19,6 +19,10 @@ COPY eslint.config.js ./
 COPY src/main/reactapp/ ./src/main/reactapp/
 COPY public/ ./public/
 
+# En producción el frontend y backend van en el mismo host
+# → URLs relativas (BASE_URL=""), sin necesidad de la URL de Render
+ENV VITE_API_URL=""
+
 # Build de Vite → genera archivos en src/main/resources/static/
 RUN npm run build
 
