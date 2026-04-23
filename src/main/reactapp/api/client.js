@@ -1,9 +1,15 @@
 /**
  * api/client.js — Cliente HTTP base
  * Centraliza la URL del backend y el manejo de errores HTTP.
+ *
+ * PRODUCCIÓN: VITE_API_URL no está definida → BASE_URL = "" (URL relativa)
+ *             Las llamadas van al mismo host que sirve el frontend (Spring Boot)
+ * DESARROLLO: VITE_API_URL=http://localhost:8080 en .env.local
  */
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
+const _envUrl = import.meta.env.VITE_API_URL;
+// Vite puede inyectar el string literal "undefined" si la var no está definida en build time
+const BASE_URL = (_envUrl && _envUrl !== "undefined") ? _envUrl : "";
 
 /**
  * Wrapper de fetch que agrega la base URL y parsea JSON automáticamente.
