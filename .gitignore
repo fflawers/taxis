@@ -1,9 +1,43 @@
-# Ignorar node_modules en cualquier carpeta
-node_modules/
-
-# Ignorar archivos comunes
+# ── Entornos ────────────────────────────────────────────────
 .env
-*.log
+*.env.local
+# Perfil local de Spring Boot (contiene credenciales reales)
+src/main/resources/application-local.properties
+
+# ── Node.js ─────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+
+# ── Vite / Frontend Build ───────────────────────────────────
+# El build de Vite va a src/main/resources/static/ (generado, no versionado)
+src/main/resources/static/
+dist/
+
+# ── Gradle / Backend Build ───────────────────────────────────
+.gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+!gradlew
+!gradlew.bat
+
+# ── JVM ─────────────────────────────────────────────────────
+*.class
+*.jar
+*.war
+
+# ── IDEs ────────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/settings.json
+
+# ── macOS ────────────────────────────────────────────────────
 .DS_Store
-Thumbs.db
-/dist
+**/.DS_Store
+
+# ── Archivos legados / temporales ───────────────────────────
+global-bundle.pem
+*.session.sql
+basetaxis1.session.sql
+migration_create_ingresos.sql
+migration_increase_varchar_limits.sql
